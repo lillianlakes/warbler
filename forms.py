@@ -1,6 +1,8 @@
+from typing import Optional
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length
+from wtforms.fields.core import RadioField
+from wtforms.validators import DataRequired, Email, Length, ValidationError, Optional
 
 
 class MessageForm(FlaskForm):
@@ -33,3 +35,7 @@ class UserEditForm(FlaskForm):
     header_image_url = StringField('(Optional) Header Image URL')
     bio = StringField('(Optional) Bio')
     password = PasswordField('Password', validators=[Length(min=6)])
+
+# class LikeForm(FlaskForm):
+
+#     is_liked = RadioField("Liked", validators=[Optional()])

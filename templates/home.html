@@ -46,9 +46,11 @@
 
     <div class="col-lg-6 col-md-8 col-sm-12">
       <ul class="list-group" id="messages">
+
+        <!-- Followers Messages -->
         {% for msg in messages %}
           <li class="list-group-item">
-            <a href="/messages/{{ msg.id }}" class="message-link"/>
+            <a href="/messages/{{ msg.id }}" class="message-link"></a>
             <a href="/users/{{ msg.user.id }}">
               <img src="{{ msg.user.image_url }}" alt="" class="timeline-image">
             </a>
@@ -56,6 +58,22 @@
               <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
               <p>{{ msg.text }}</p>
+
+              <!-- For LIKE Dev Testing -->
+              <!-- <form method="POST" id="like_form">
+                {{ form.hidden_tag() }}
+        
+                {% for field in form if field.widget.input_type != 'hidden' %}
+                  {% for error in field.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                  {{ field(placeholder=field.label.text, class="form-control") }}
+                {% endfor %}
+        
+                <button class="btn btn-primary btn-block btn-lg">Like</button>
+              </form> -->
+              <!-- End LIKE Dev Testing -->
+
             </div>
           </li>
         {% endfor %}

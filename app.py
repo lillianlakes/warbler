@@ -4,7 +4,7 @@ import pdb
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
-from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
+from forms import LikeForm, UserAddForm, LoginForm, MessageForm, UserEditForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
@@ -306,7 +306,7 @@ def messages_destroy(message_id):
 # Homepage and error pages
 
 
-@app.route('/')
+@app.route('/', methods=['GET','POST'])
 def homepage():
     """Show homepage:
 
@@ -314,25 +314,30 @@ def homepage():
     - logged in: 100 most recent messages of followed_users
     """
 
-    if g.user:
-
-        # gets followers ids
-        user_and_followers_ids = [user.id for user in g.user.following]
-
-        # adds user's id
-        user_and_followers_ids.append(g.user.id)
-
-        messages = (Message
-                    .query
-                    .filter(Message.user_id.in_(user_and_followers_ids))
-                    .order_by(Message.timestamp.desc())
-                    .limit(100)
-                    .all())
-
-        return render_template('home.html', messages=messages)
-
-    else:
+    if not g.user:
         return render_template('home-anon.html')
+    
+    # form = LikeForm()
+
+    # gets followers ids
+    user_and_followers_ids = [user.id for user in g.user.following]
+
+    # adds user's id
+    user_and_followers_ids.append(g.user.id)
+
+    messages = (Message
+                .query
+                .filter(Message.user_id.in_(user_and_followers_ids))
+                .order_by(Message.timestamp.desc())
+                .limit(100)
+                .all())
+
+    return render_template('home.html', messages=messages, form=form)
+
+        
+
+
+
 
 
 ##############################################################################
