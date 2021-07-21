@@ -1,9 +1,9 @@
 import os
+import pdb
 
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
-
 from forms import UserAddForm, LoginForm, MessageForm
 from models import db, connect_db, User, Message
 
@@ -115,6 +115,8 @@ def logout():
 
     # IMPLEMENT THIS
     session.pop(CURR_USER_KEY, None)
+    flash("You have been logged out.")
+    return redirect('/login')
 
 
 ##############################################################################
@@ -149,7 +151,6 @@ def users_show(user_id):
 @app.route('/users/<int:user_id>/following')
 def show_following(user_id):
     """Show list of people this user is following."""
-
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -162,6 +163,7 @@ def show_following(user_id):
 def users_followers(user_id):
     """Show list of followers of this user."""
 
+    # pdb.set_trace()
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
