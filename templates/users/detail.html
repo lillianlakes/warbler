@@ -2,12 +2,17 @@
 
 {% block content %}
 
-  <div id="warbler-hero" class="full-width"></div>
+  <!-- header image -->
+  <div id="warbler-hero" style="background-image: url('{{ user.header_image_url }}');" class="full-width"></div>
+
+  <!-- profile pic -->
   <img src="{{ user.image_url }}" alt="Image for {{ user.username }}" id="profile-avatar">
   <div class="row full-width">
     <div class="container">
       <div class="row justify-content-end">
         <div class="col-9">
+
+            <!-- nav bar -->
           <ul class="user-stats nav nav-pills">
             <li class="stat">
               <p class="small">Messages</p>
@@ -55,11 +60,12 @@
     </div>
   </div>
 
+  <!-- bio and location -->
   <div class="row">
     <div class="col-sm-3">
       <h4 id="sidebar-username">@{{ user.username }}</h4>
-      <p>BIO HERE</p>
-      <p class="user-location"><span class="fa fa-map-marker"></span>LOCATION HERE</p>
+      <p>{{ user.bio }}</p>
+      <p class="user-location"><span class="fa fa-map-marker"></span> {{ user.location }}</p>
     </div>
 
     {% block user_details %}
