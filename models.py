@@ -91,6 +91,8 @@ class User(db.Model):
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
 
+    user = db.relationship('Like', backref='users')
+
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
 
@@ -161,8 +163,8 @@ class Message(db.Model):
         nullable=False,
     )
 
-    timestamp = db.Column(
-        db.DateTime,
+    
+    timestamp = db.Column( db.DateTime,
         nullable=False,
         default=datetime.utcnow,
     )
@@ -175,6 +177,24 @@ class Message(db.Model):
     )
 
     user = db.relationship('User')
+    like = db.relationship('Like', backref='messages')
+
+# ================================================================= Likes
+class Like(db.Model):
+    """User liked messages""" 
+    # every user can like many messages
+    # every message can have many users liking it 
+
+    __tablename__= "likes"
+    message_id = db.Column(db.Integer,
+                           db.ForeignKey('messages.id'), 
+                           primary_key=True,
+                           nullable=False)
+                           
+    users_id = db.Column(db.Integer,
+                         db.ForeignKey('users.id'), 
+                         primary_key=True, 
+                         nullable=False) 
 
 
 def connect_db(app):
