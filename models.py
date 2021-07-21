@@ -70,10 +70,12 @@ class User(db.Model):
     password = db.Column(
         db.Text,
         nullable=False,
-    )
+    )  ## to change later
 
     messages = db.relationship('Message', order_by='Message.timestamp.desc()')
 
+
+    # users who follow this user -- many to one
     followers = db.relationship(
         "User",
         secondary="follows",
@@ -81,6 +83,7 @@ class User(db.Model):
         secondaryjoin=(Follows.user_following_id == id)
     )
 
+    # users who this user follows  -- many to one
     following = db.relationship(
         "User",
         secondary="follows",
@@ -163,7 +166,8 @@ class Message(db.Model):
         nullable=False,
         default=datetime.utcnow,
     )
-
+    
+    # to inspect 
     user_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete='CASCADE'),
