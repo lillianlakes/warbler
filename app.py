@@ -301,6 +301,70 @@ def messages_destroy(message_id):
     return redirect(f"/users/{g.user.id}")
 
 
+
+
+
+
+@app.route('/messages/<int:message_id>/like', methods=['POST'])
+def messages_like(message_id):
+    """Add a like to this message for the currently-logged-in user."""
+
+    if not g.user:
+        flash("You must be logged in to like a message.", "danger")
+        return redirect("/")
+
+    liked_message = Message.query.get_or_404(message_id)
+    g.user.likes.append(liked_message)
+    db.session.commit()
+
+    return redirect("/")
+    # alternative redirect route:
+    # return redirect("/users/<int:liked_message.user_id>")
+
+
+
+
+
+
+
+
+# @app.route('/messages/<int:message_id>/unlike', methods=['POST'])
+# def messages_unlike(message_id):
+#     """Have currently-logged-in-user unlike this message."""
+
+#     if not g.user:
+#         flash("You must be logged in to unlike a message.", "danger")
+#         return redirect("/")
+
+#     unliked_message = Message.query.get_or_404(message_id)
+#     g.user.likes.remove(unliked_message)
+#     db.session.commit()
+
+#     return redirect("/")
+
+# @app.route('/users/<int:user_id>/liked_messages')
+# def show_liked_messages(user_id):
+#     """Show list of messages this user has liked."""
+#     if not g.user:
+#         flash("You must be logged in to see messages liked.", "danger")
+#         return redirect("/")
+
+#     user = User.query.get_or_404(user_id)
+#     return render_template('users/liked_messages.html', user=user)
+
+
+# @app.route('/messages/<int:message_id>/users_who_like')
+# def users_who_like_message(message_id):
+#     """Show list of users who like this message."""
+
+#     if not g.user:
+#         flash("Access unauthorized.", "danger")
+#         return redirect("/")
+
+#     user = User.query.get_or_404(user_id)
+#     return render_template(f"messages/{message_id}/users_who_like.html", user=user)
+
+
 ##############################################################################
 # Homepage and error pages
 
@@ -330,7 +394,7 @@ def homepage():
                 .limit(100)
                 .all())
 
-    return render_template('home.html', messages=messages, form=form)
+    return render_template('home.html', messages=messages, form=LikeForm())
 
 
 

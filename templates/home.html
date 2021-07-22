@@ -59,39 +59,40 @@
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
               <p>{{ msg.text }}</p>
                 
-              <!-- for messages that user didn't create: show heart -->
-              <!-- if not liked: class "far" and no style": for black, outline heart -->
-              <!-- if liked: class "fas" and style "red": for red, solid heart -->
-              <!--i class="fas far fa-heart fa-lg" style="color:red"></i> -->
-              <!-- ICON must outside of the message area --- requires higher z-index  -->
-              
-              <!-- DEV TESTING -->
-              <!-- Maybe instead of a form we redirect?  -->
-              <!-- Like -->  
-                <form method="POST" 
-                      action="/">
-                  {{ form.hidden_tag() }}
+              <form method="POST" 
+              action="/">
 
-                  <!-- Liked messages -->
-                  {% if msg in g.user.liked_messages%}                
-                    <button class="btn fas fa-heart fa-lg" 
-                            style="position:relative; 
-                                    color:red; 
-                                    z-index:2">
-                
-                      
-                  {% else %}
-                  <!-- Unliked Messages -->
-                    <button class="btn far fa-heart fa-lg" 
-                            style="position:relative; 
-                                  color:black; 
-                                  z-index:2">
-                    </button>
-                    {{form.is_liked(value=true)}}
-                  {% endif %}
-                </form>
+
+
+
+
+
+          <!-- Liked messages -->
+          {% if msg in g.user.liked_messages%} 
+          
+          
+
+            <button class="btn fas fa-heart fa-lg" 
+                    style="position:relative; 
+                            color:red; 
+                            z-index:2">
+        
               
-              <!-- END DEV TESTING -->
+          {% elif msg.user.id != g.user.id %}
+          <!-- Unliked Messages -->
+            <button class="btn far fa-heart fa-lg" 
+                    style="position:relative; 
+                          color:black; 
+                          z-index:2">
+            </button>
+            {{form.is_liked(value=true)}}
+          {% endif %}
+        </form>
+
+
+
+
+
 
             </div>
           </li>
