@@ -59,40 +59,34 @@
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
               <p>{{ msg.text }}</p>
                 
-              <form method="POST" 
-              action="/">
-
-
-
-
-
 
           <!-- Liked messages -->
           {% if msg in g.user.liked_messages%} 
-          
-          
 
-            <button class="btn fas fa-heart fa-lg" 
-                    style="position:relative; 
-                            color:red; 
-                            z-index:2">
-        
+          <form>
+            <button formaction="/messages/{{ msg.id }}/like" formmethod="POST">
+                <i class="fas fa-heart fa-lg" style="color: red; position: relative; z-index: 2">
+                </i>
+            </button>
+          </form>
               
           {% elif msg.user.id != g.user.id %}
           <!-- Unliked Messages -->
-            <button class="btn far fa-heart fa-lg" 
-                    style="position:relative; 
-                          color:black; 
-                          z-index:2">
-            </button>
+          <form action="/messages/{{ msg.id }}/unlike" method="POST">
+                <input type="submit" class="far fa-heart fa-lg" style="position: relative; z-index: 10">
+                </input>
+          </form>          
             {{form.is_liked(value=true)}}
           {% endif %}
-        </form>
 
 
 
-
-
+    <!-- <input formaction=" /messages/{{ msg.id }}/like" type="submit" for="unlike" class="btn far fa-heart fa-lg" 
+    style="position:relative; 
+          color:black; 
+          z-index:2">
+          <i class="far fa-heart fa-lg" style="position: relative; z-index: 1"></i></i>
+</input> -->
 
             </div>
           </li>
