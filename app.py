@@ -315,10 +315,8 @@ def homepage():
 
     if not g.user:
         return render_template('home-anon.html')
-    
-    # NOTE: reference line 174 and line 189
-    form = LikeForm()
-    likes = Like.query.all()
+    # TODO: set forms to have likes populated 
+   
     # gets followers ids
     user_and_followers_ids = [user.id for user in g.user.following]
 
@@ -335,7 +333,6 @@ def homepage():
     return render_template('home.html', messages=messages, form=form)
 
 
-        
 
 
 

@@ -1,7 +1,7 @@
 from typing import Optional
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField, BooleanField
-from wtforms.fields.core import RadioField
+from wtforms import StringField, PasswordField, TextAreaField, HiddenField
+from wtforms.fields.core import IntegerField, RadioField
 from wtforms.validators import DataRequired, Email, Length, ValidationError, Optional
 
 
@@ -38,4 +38,5 @@ class UserEditForm(FlaskForm):
 
 class LikeForm(FlaskForm):
 
-    is_liked = BooleanField("Liked", validators=[Optional()])
+    is_liked = HiddenField("Liked")
+ 

@@ -62,24 +62,35 @@
               <!-- for messages that user didn't create: show heart -->
               <!-- if not liked: class "far" and no style": for black, outline heart -->
               <!-- if liked: class "fas" and style "red": for red, solid heart -->
-              <i class="fas far fa-heart fa-lg" style="color:red"></i></i> 
+              <!--i class="fas far fa-heart fa-lg" style="color:red"></i> -->
               <!-- ICON must outside of the message area --- requires higher z-index  -->
               
               <!-- DEV TESTING -->
-              <!-- Like -->
-              {% if g.user %}
-                      {% if g.user.is_following(user) %}
-                        <form method="POST">
-                          action="/users/stop-following/{{ user.id }}">
-                          <button class="btn btn-primary btn-sm">Unfollow</button>
-                        </form>
-                      {% else %}
-                        <form method="POST"
-                              action="/users/follow/{{ user.id }}">
-                          <button class="btn btn-outline-primary btn-sm">Follow</button>
-                        </form>
-                      {% endif %}
-                    {% endif %}
+              <!-- Maybe instead of a form we redirect?  -->
+              <!-- Like -->  
+                <form method="POST" 
+                      action="/">
+                  {{ form.hidden_tag() }}
+
+                  <!-- Liked messages -->
+                  {% if msg in g.user.liked_messages%}                
+                    <button class="btn fas fa-heart fa-lg" 
+                            style="position:relative; 
+                                    color:red; 
+                                    z-index:2">
+                
+                      
+                  {% else %}
+                  <!-- Unliked Messages -->
+                    <button class="btn far fa-heart fa-lg" 
+                            style="position:relative; 
+                                  color:black; 
+                                  z-index:2">
+                    </button>
+                    {{form.is_liked(value=true)}}
+                  {% endif %}
+                </form>
+              
               <!-- END DEV TESTING -->
 
             </div>

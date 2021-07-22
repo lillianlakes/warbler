@@ -170,7 +170,7 @@ class Message(db.Model):
         default=datetime.utcnow,
     )
     
-    # to inspect 
+    # id of user who posted
     user_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete='CASCADE'),
