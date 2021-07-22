@@ -58,21 +58,11 @@
               <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
               <p>{{ msg.text }}</p>
-
-              <!-- For LIKE Dev Testing -->
-              <!-- <form method="POST" id="like_form">
-                {{ form.hidden_tag() }}
-        
-                {% for field in form if field.widget.input_type != 'hidden' %}
-                  {% for error in field.errors %}
-                    <span class="text-danger">{{ error }}</span>
-                  {% endfor %}
-                  {{ field(placeholder=field.label.text, class="form-control") }}
-                {% endfor %}
-        
-                <button class="btn btn-primary btn-block btn-lg">Like</button>
-              </form> -->
-              <!-- End LIKE Dev Testing -->
+                
+              <!-- for messages that user didn't create: show heart -->
+              <!-- if not liked: class "far" and no style": for black, outline heart -->
+              <!-- if liked: class "fas" and style "red": for red, solid heart -->
+              <i class="fas far fa-heart fa-lg" style="color:red"></i></i> 
 
             </div>
           </li>

@@ -4,7 +4,7 @@ import pdb
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
-from forms import LikeForm, UserAddForm, LoginForm, MessageForm, UserEditForm
+from forms import UserAddForm, LoginForm, MessageForm, UserEditForm # LikeForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
@@ -332,7 +332,9 @@ def homepage():
                 .limit(100)
                 .all())
 
-    return render_template('home.html', messages=messages, form=form)
+    return render_template('home.html', messages=messages)
+
+    #  form=form
 
         
 
