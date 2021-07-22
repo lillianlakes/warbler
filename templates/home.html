@@ -60,33 +60,21 @@
               <p>{{ msg.text }}</p>
                 
 
-          <!-- Liked messages -->
+          <form action="/messages/{{ msg.id }}/like" method="POST" style="position:relative;">
+              <!-- Liked messages -->
           {% if msg in g.user.liked_messages%} 
-
-          <form>
-            <button formaction="/messages/{{ msg.id }}/like" formmethod="POST">
-                <i class="fas fa-heart fa-lg" style="color: red; position: relative; z-index: 2">
-                </i>
-            </button>
-          </form>
-              
+            <button type="submit" class="btn fas fa-heart fa-lg" style="color:red; position: absolute; z-index: 9999;">
           {% elif msg.user.id != g.user.id %}
-          <!-- Unliked Messages -->
-          <form action="/messages/{{ msg.id }}/unlike" method="POST">
-                <input type="submit" class="far fa-heart fa-lg" style="position: relative; z-index: 10">
-                </input>
-          </form>          
-            {{form.is_liked(value=true)}}
+            <!-- Unliked Messages -->
+            <button type="submit" class="btn far fa-heart fa-lg" style="position: absolute; z-index: 9999;">
           {% endif %}
+          
+          </form>  
+            
 
 
 
-    <!-- <input formaction=" /messages/{{ msg.id }}/like" type="submit" for="unlike" class="btn far fa-heart fa-lg" 
-    style="position:relative; 
-          color:black; 
-          z-index:2">
-          <i class="far fa-heart fa-lg" style="position: relative; z-index: 1"></i></i>
-</input> -->
+
 
             </div>
           </li>

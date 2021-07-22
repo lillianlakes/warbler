@@ -302,30 +302,27 @@ def messages_destroy(message_id):
 
 
 
-
+##############################################################################
+# Likes 
 
 
 @app.route('/messages/<int:message_id>/like', methods=['POST'])
 def messages_like(message_id):
-    """Add a like to this message for the currently-logged-in user."""
+    """Add a like or unlike to this message for the currently-logged-in user."""
 
     if not g.user:
         flash("You must be logged in to like a message.", "danger")
         return redirect("/")
 
     liked_message = Message.query.get_or_404(message_id)
-    g.user.likes.append(liked_message)
+    if liked_message in g.user.liked_messages:
+        g.user.liked_messages.remove(liked_message)
+    else:
+        g.user.liked_messages.append(liked_message)
     db.session.commit()
-
     return redirect("/")
     # alternative redirect route:
     # return redirect("/users/<int:liked_message.user_id>")
-
-
-
-
-
-
 
 
 # @app.route('/messages/<int:message_id>/unlike', methods=['POST'])
