@@ -25,7 +25,7 @@
               <h4>
                 <a href="/users/{{ user.id }}/following">{{ user.following | length }}</a>
               </h4>
-            </li>
+            </li>      
             <li class="stat">
               <p class="small">Followers</p>
               <h4>
@@ -34,7 +34,9 @@
             </li>
             <li class="stat">
               <p class="small">Likes</p>
-              <h4>TBD</h4>
+              <h4>
+                <a href="/users/{{ user.id }}/liked_messages">{{ user.liked_messages | length }}</a>
+              </h4>
             </li>
             <div class="ml-auto">
               {% if g.user.id == user.id %}

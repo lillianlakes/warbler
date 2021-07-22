@@ -4,7 +4,7 @@ import pdb
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
-from forms import UserAddForm, LoginForm, MessageForm, UserEditForm, LikeForm
+from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
 from models import db, connect_db, User, Message, Like
 
 CURR_USER_KEY = "curr_user"
@@ -162,7 +162,6 @@ def show_following(user_id):
 def users_followers(user_id):
     """Show list of followers of this user."""
 
-    # pdb.set_trace()
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -233,7 +232,6 @@ def profile():
         return redirect(f'/users/{g.user.id}')
 
     return render_template('users/edit.html', form=form)
-
 
 
 @app.route('/users/delete', methods=["POST"])
@@ -308,48 +306,51 @@ def messages_destroy(message_id):
 
 @app.route('/messages/<int:message_id>/like', methods=['POST'])
 def messages_like(message_id):
-    """Add a like or unlike to this message for the currently-logged-in user."""
+    """Add a like to this message for the currently-logged-in user."""
 
     if not g.user:
         flash("You must be logged in to like a message.", "danger")
         return redirect("/")
 
     liked_message = Message.query.get_or_404(message_id)
-    if liked_message in g.user.liked_messages:
-        g.user.liked_messages.remove(liked_message)
-    else:
-        g.user.liked_messages.append(liked_message)
+    
+    g.user.liked_messages.append(liked_message)
     db.session.commit()
+
     return redirect("/")
-    # alternative redirect route:
-    # return redirect("/users/<int:liked_message.user_id>")
+
+    # use a .referrer on the request object to redirect back to the page that referred e.g.
+    # either the favorites page or the home page....
+
+@app.route('/messages/<int:message_id>/unlike', methods=['POST'])
+def messages_unlike(message_id):
+    """Have currently-logged-in-user unlike this message."""
+
+    if not g.user:
+        flash("You must be logged in to unlike a message.", "danger")
+        return redirect("/")
+        # would be better if we could go to liked_messages if coming from liked_messages
+        # or home if coming from home... instead of default home
+
+    unliked_message = Message.query.get_or_404(message_id)
+
+    g.user.liked_messages.remove(unliked_message)
+    db.session.commit()
+
+    return redirect("/")
+
+@app.route('/users/<int:user_id>/liked_messages')
+def show_liked_messages(user_id):
+    """Show list of messages this user has liked."""
+    if not g.user:
+        flash("You must be logged in to see messages liked.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    return render_template('users/liked_messages.html', user=user)
 
 
-# @app.route('/messages/<int:message_id>/unlike', methods=['POST'])
-# def messages_unlike(message_id):
-#     """Have currently-logged-in-user unlike this message."""
-
-#     if not g.user:
-#         flash("You must be logged in to unlike a message.", "danger")
-#         return redirect("/")
-
-#     unliked_message = Message.query.get_or_404(message_id)
-#     g.user.likes.remove(unliked_message)
-#     db.session.commit()
-
-#     return redirect("/")
-
-# @app.route('/users/<int:user_id>/liked_messages')
-# def show_liked_messages(user_id):
-#     """Show list of messages this user has liked."""
-#     if not g.user:
-#         flash("You must be logged in to see messages liked.", "danger")
-#         return redirect("/")
-
-#     user = User.query.get_or_404(user_id)
-#     return render_template('users/liked_messages.html', user=user)
-
-
+# # nice to have for later
 # @app.route('/messages/<int:message_id>/users_who_like')
 # def users_who_like_message(message_id):
 #     """Show list of users who like this message."""
@@ -358,8 +359,10 @@ def messages_like(message_id):
 #         flash("Access unauthorized.", "danger")
 #         return redirect("/")
 
-#     user = User.query.get_or_404(user_id)
-#     return render_template(f"messages/{message_id}/users_who_like.html", user=user)
+#     message = Message.query.get_or_404(message_id)
+#     # message.user
+
+#     return render_template("messages/users_who_like.html", user=message.user, message=message)
 
 
 ##############################################################################
@@ -391,7 +394,7 @@ def homepage():
                 .limit(100)
                 .all())
 
-    return render_template('home.html', messages=messages, form=LikeForm())
+    return render_template('home.html', messages=messages)
 
 
 

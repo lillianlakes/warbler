@@ -1,0 +1,48 @@
+{% extends 'users/detail.html' %}
+
+{% block user_details %}
+  <div class="col-sm-9">
+    <div class="row">
+
+      {% for user_who_likes in message.users_who_like %}
+
+        <div class="col-lg-4 col-md-6 col-12">
+          <div class="card user-card">
+            <div class="card-inner">
+              <div class="image-wrapper">
+                <img src="{{ user_who_likes.header_image_url }}" alt="" class="card-hero">
+              </div>
+
+              <div class="card-contents">
+                <a href="/users/{{ user_who_likes.id }}" class="card-link">
+                  <img
+                      src="{{ user_who_likes.image_url }}"
+                      alt="Image for {{ user_who_likes.username }}"
+                      class="card-image">
+                  <p>@{{ user_who_likes.username }}</p>
+                </a>
+
+                {% if g.user.is_following(user_who_likes) %}
+                  <form method="POST"
+                        action="/users/stop-following/{{ user_who_likes.id }}">
+                    <button class="btn btn-primary btn-sm">Unfollow</button>
+                  </form>
+                {% elif msg.user.id != g.user.id %}
+                  <form method="POST" action="/users/follow/{{ user_who_likes.id }}">
+                    <button class="btn btn-outline-primary btn-sm">Follow</button>
+                  </form>
+                {% endif %}
+
+              </div>
+              <!-- user_who_likes's bio -->
+              <p class="card-bio">{{ user_who_likes.bio }}</p>
+            </div>
+          </div>
+        </div>
+
+      {% endfor %}
+
+    </div>
+  </div>
+
+{% endblock %}

@@ -206,29 +206,3 @@ def connect_db(app):
 
     db.app = app
     db.init_app(app)
-
-
-    # def is_following(self, other_user):
-    #     """Is this user following `other_use`?"""
-
-    #     found_user_list = [user for user in self.following if user == other_user]
-    #     return len(found_user_list) == 1
-
-    # @classmethod
-    # def signup(cls, username, email, password, image_url):
-    #     """Sign up user.
-
-    #     Hashes password and adds user to system.
-    #     """
-
-    #     hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
-
-    #     user = User(
-    #         username=username,
-    #         email=email,
-    #         password=hashed_pwd,
-    #         image_url=image_url,
-    #     )
-
-    #     db.session.add(user)
-    #     return user

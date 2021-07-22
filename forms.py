@@ -35,8 +35,3 @@ class UserEditForm(FlaskForm):
     header_image_url = StringField('(Optional) Header Image URL')
     bio = StringField('(Optional) Bio')
     password = PasswordField('Password', validators=[Length(min=6)])
-
-class LikeForm(FlaskForm):
-
-    is_liked = HiddenField("Liked")
- 

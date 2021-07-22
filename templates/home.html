@@ -47,7 +47,6 @@
     <div class="col-lg-6 col-md-8 col-sm-12">
       <ul class="list-group" id="messages">
 
-        <!-- Followers Messages -->
         {% for msg in messages %}
           <li class="list-group-item">
             <a href="/messages/{{ msg.id }}" class="message-link"></a>
@@ -60,22 +59,19 @@
               <p>{{ msg.text }}</p>
                 
 
-          <form action="/messages/{{ msg.id }}/like" method="POST" style="position:relative;">
-              <!-- Liked messages -->
-          {% if msg in g.user.liked_messages%} 
-            <button type="submit" class="btn fas fa-heart fa-lg" style="color:red; position: absolute; z-index: 9999;">
+              <!-- TODO: Tim suggested making classes for the styling -->
+          <form method="POST" style="position:relative;">
+              <!-- Unlike liked messages -->
+          {% if msg in g.user.liked_messages %} 
+            <button type="submit" formaction="/messages/{{ msg.id }}/unlike" class="btn fas fa-heart fa-lg" style="color:red; position: absolute; z-index: 9999;">
+            <!-- <a href="/messages/{{ msg.id }}/users_who_like" style="text-decoration: none">{{ msg.users_who_like | length }}</a> -->
           {% elif msg.user.id != g.user.id %}
-            <!-- Unliked Messages -->
-            <button type="submit" class="btn far fa-heart fa-lg" style="position: absolute; z-index: 9999;">
+            <!-- Like messages written by other users -->
+            <button type="submit" formaction="/messages/{{ msg.id }}/like" class="btn far fa-heart fa-lg" style="position: absolute; z-index: 9999;">
+            <!-- <a href="/messages/{{ msg.id }}/users_who_like" style="text-decoration: none">{{ msg.users_who_like | length }}</a> -->
           {% endif %}
-          
           </form>  
             
-
-
-
-
-
             </div>
           </li>
         {% endfor %}
