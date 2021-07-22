@@ -63,6 +63,24 @@
               <!-- if not liked: class "far" and no style": for black, outline heart -->
               <!-- if liked: class "fas" and style "red": for red, solid heart -->
               <i class="fas far fa-heart fa-lg" style="color:red"></i></i> 
+              <!-- ICON must outside of the message area --- requires higher z-index  -->
+              
+              <!-- DEV TESTING -->
+              <!-- Like -->
+              {% if g.user %}
+                      {% if g.user.is_following(user) %}
+                        <form method="POST">
+                          action="/users/stop-following/{{ user.id }}">
+                          <button class="btn btn-primary btn-sm">Unfollow</button>
+                        </form>
+                      {% else %}
+                        <form method="POST"
+                              action="/users/follow/{{ user.id }}">
+                          <button class="btn btn-outline-primary btn-sm">Follow</button>
+                        </form>
+                      {% endif %}
+                    {% endif %}
+              <!-- END DEV TESTING -->
 
             </div>
           </li>

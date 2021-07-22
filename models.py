@@ -90,8 +90,8 @@ class User(db.Model):
         primaryjoin=(Follows.user_following_id == id),
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
-
-    user = db.relationship('Like', backref='users')
+    # Property that shows the messages liked by a user
+    liked_messages = db.relationship('Message', secondary="likes", backref='users_who_like')
 
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
@@ -107,6 +107,7 @@ class User(db.Model):
 
         found_user_list = [user for user in self.following if user == other_user]
         return len(found_user_list) == 1
+    
 
     @classmethod
     def signup(cls, username, email, password, image_url):
@@ -196,14 +197,6 @@ class Like(db.Model):
                          primary_key=True, 
                          nullable=False) 
 
-    @classmethod
-    def like_message(cls, users_id, message_id):
-        Like(users_id, message_id)
-        
-        users_id = users_id
-        message_id = message_id
-
-
 
 def connect_db(app):
     """Connect this database to provided Flask app.
@@ -215,30 +208,27 @@ def connect_db(app):
     db.init_app(app)
 
 
+    # def is_following(self, other_user):
+    #     """Is this user following `other_use`?"""
 
+    #     found_user_list = [user for user in self.following if user == other_user]
+    #     return len(found_user_list) == 1
 
+    # @classmethod
+    # def signup(cls, username, email, password, image_url):
+    #     """Sign up user.
 
-    def is_following(self, other_user):
-        """Is this user following `other_use`?"""
+    #     Hashes password and adds user to system.
+    #     """
 
-        found_user_list = [user for user in self.following if user == other_user]
-        return len(found_user_list) == 1
+    #     hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
 
-    @classmethod
-    def signup(cls, username, email, password, image_url):
-        """Sign up user.
+    #     user = User(
+    #         username=username,
+    #         email=email,
+    #         password=hashed_pwd,
+    #         image_url=image_url,
+    #     )
 
-        Hashes password and adds user to system.
-        """
-
-        hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
-
-        user = User(
-            username=username,
-            email=email,
-            password=hashed_pwd,
-            image_url=image_url,
-        )
-
-        db.session.add(user)
-        return user
+    #     db.session.add(user)
+    #     return user

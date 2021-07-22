@@ -4,8 +4,8 @@ import pdb
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
-from forms import UserAddForm, LoginForm, MessageForm, UserEditForm # LikeForm
-from models import db, connect_db, User, Message
+from forms import UserAddForm, LoginForm, MessageForm, UserEditForm, LikeForm
+from models import db, connect_db, User, Message, Like
 
 CURR_USER_KEY = "curr_user"
 
@@ -113,7 +113,6 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    # IMPLEMENT THIS: completed
     do_logout()
     flash("You have been logged out.")
     return redirect('/login')
@@ -317,8 +316,9 @@ def homepage():
     if not g.user:
         return render_template('home-anon.html')
     
-    # form = LikeForm()
-
+    # NOTE: reference line 174 and line 189
+    form = LikeForm()
+    likes = Like.query.all()
     # gets followers ids
     user_and_followers_ids = [user.id for user in g.user.following]
 
@@ -332,9 +332,8 @@ def homepage():
                 .limit(100)
                 .all())
 
-    return render_template('home.html', messages=messages)
+    return render_template('home.html', messages=messages, form=form)
 
-    #  form=form
 
         
 
