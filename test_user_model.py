@@ -31,7 +31,8 @@ db.create_all()
 U1 = {
     "email" : "test1@test.com",
     "username" : "testuser1",
-    "password" : "HASHED_PASSWORD"
+    "password" : "HASHED_PASSWORD",
+    "image_url": ""
 }
 
 U2 = { 
@@ -101,7 +102,6 @@ class UserModelTestCase(TestCase):
         db.session.commit()
 
         result = u1.is_following(u2)
-
         self.assertTrue(result)
 
     def test_user_is_not_following(self):
@@ -118,8 +118,49 @@ class UserModelTestCase(TestCase):
         db.session.commit()
 
         result = u1.is_following(u2)
-
         self.assertFalse(result)
         
+    def test_user_is_followed_by(self):
+        """Should detect user1 is being followed by user2"""
 
+        u1 = User.query.get(self.u1_id)
+        u2 = User.query.get(self.u2_id)
+        db.session.commit()
+
+        u2.following.append(u1)
+        db.session.commit()
+
+        result = u1.is_followed_by(u2)
+        self.assertTrue(result)
+
+    def test_user_is_not_followed_by(self):
+        """Should detect user1 is not being followed by user2"""
+
+        u1 = User.query.get(self.u1_id)
+        u2 = User.query.get(self.u2_id)
+        db.session.commit()
+
+        u2.following.append(u1)
+        db.session.commit()
+
+        u2.following.remove(u1)
+        db.session.commit()
+
+        result = u1.is_followed_by(u2)
+
+        self.assertFalse(result)
+
+    def test_user_signup(self):
     
+       u3_data = {
+         "email" : "test3@test.com",
+         "username" : "testuser3",
+         "password" : "HASHED_PASSWORD",
+         "image_url": ""
+        }
+       user = User.signup(**u3_data)
+       db.session.add(user)
+       db.session.commit()
+
+
+        
