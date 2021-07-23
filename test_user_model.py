@@ -11,6 +11,7 @@ from unittest import TestCase
 from flask_bcrypt import Bcrypt
 from models import db, User, Message, Follows
 from psycopg2.errors import UniqueViolation
+from sqlalchemy import exc
 
 bcrypt = Bcrypt()
 
@@ -170,13 +171,22 @@ class UserModelTestCase(TestCase):
 
         self.assertEqual(user.email, u3_data['email'])
         self.assertEqual(user.username, u3_data['username'])
-        # self.assertEqual(user.password, hashed_pwd) #Q: how can we test password? We tried to replicate here...
+        # self.assertEqual(user.password, hashed_pwd) 
+        # Q: how can we test password? We tried to replicate here...
         self.assertEqual(user.image_url, u3_data['image_url'])
+
+        # Q: Do we test by pulling from db?  
+        
 
     def test_user_signup_nonunique(self):
         """Make sure User.signup fails to create a new user if credentials are not unique"""
-    
-        # u1 = User.signup(**U1)
-        # db.session.commit()
+                    
+        with self.assertRaises(exc.IntegrityError):
+            u3 = User.signup(**U1)  
+            db.session.commit()
+          
 
-        self.assertRaises(UniqueViolation, User.signup, **U1)
+        #Q How do we commit and assert this? 
+
+    
+
