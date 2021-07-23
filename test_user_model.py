@@ -5,10 +5,14 @@
 #    python -m unittest test_user_model.py
 
 
+from logging import error
 import os
 from unittest import TestCase
-
+from flask_bcrypt import Bcrypt
 from models import db, User, Message, Follows
+from psycopg2.errors import UniqueViolation
+
+bcrypt = Bcrypt()
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -151,16 +155,28 @@ class UserModelTestCase(TestCase):
         self.assertFalse(result)
 
     def test_user_signup(self):
+        """Make sure User.signup succesfully creates a new user given valid credentials"""
+
+        hashed_pwd = bcrypt.generate_password_hash("HASHED_PASSWORD").decode('UTF-8')
     
-       u3_data = {
+        u3_data = {
          "email" : "test3@test.com",
          "username" : "testuser3",
          "password" : "HASHED_PASSWORD",
          "image_url": ""
         }
-       user = User.signup(**u3_data)
-       db.session.add(user)
-       db.session.commit()
+        user = User.signup(**u3_data)
+        db.session.commit()
 
+        self.assertEqual(user.email, u3_data['email'])
+        self.assertEqual(user.username, u3_data['username'])
+        # self.assertEqual(user.password, hashed_pwd) #Q: how can we test password? We tried to replicate here...
+        self.assertEqual(user.image_url, u3_data['image_url'])
 
-        
+    def test_user_signup_nonunique(self):
+        """Make sure User.signup fails to create a new user if credentials are not unique"""
+    
+        # u1 = User.signup(**U1)
+        # db.session.commit()
+
+        self.assertRaises(UniqueViolation, User.signup, **U1)
