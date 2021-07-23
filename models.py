@@ -180,6 +180,7 @@ class Message(db.Model):
     user = db.relationship('User')
     like = db.relationship('Like', backref='messages')
 
+
 # ================================================================= Likes
 class Like(db.Model):
     """User liked messages""" 

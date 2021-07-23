@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
-from models import db, connect_db, User, Message, Like
+from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
 
@@ -322,6 +322,7 @@ def messages_like(message_id):
     # use a .referrer on the request object to redirect back to the page that referred e.g.
     # either the favorites page or the home page....
 
+
 @app.route('/messages/<int:message_id>/unlike', methods=['POST'])
 def messages_unlike(message_id):
     """Have currently-logged-in-user unlike this message."""
@@ -339,9 +340,11 @@ def messages_unlike(message_id):
 
     return redirect("/")
 
+
 @app.route('/users/<int:user_id>/liked_messages')
 def show_liked_messages(user_id):
     """Show list of messages this user has liked."""
+    
     if not g.user:
         flash("You must be logged in to see messages liked.", "danger")
         return redirect("/")
@@ -379,6 +382,7 @@ def homepage():
 
     if not g.user:
         return render_template('home-anon.html')
+    
     # TODO: set forms to have likes populated 
    
     # gets followers ids
@@ -395,11 +399,6 @@ def homepage():
                 .all())
 
     return render_template('home.html', messages=messages)
-
-
-
-
-
 
 
 ##############################################################################
