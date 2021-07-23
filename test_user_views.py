@@ -49,7 +49,7 @@ class MessageViewTestCase(TestCase):
                                     image_url=None)
         
         db.session.commit()
-        self.user_id = self.testuser
+        self.user_id = self.testuser.id
 		
     # NOTE: how do we test for this? 
     # def test_add_user_to_g(self):
@@ -75,6 +75,7 @@ class MessageViewTestCase(TestCase):
             self.assertIn(  'User Signup', html)
 
     def test_signup_submit(self):
+        """test user signup submission with valid credentials"""
 
         with self.client.session_transaction() as sess:
             sess[CURR_USER_KEY] = self.testuser.id
@@ -93,3 +94,123 @@ class MessageViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
             self.assertEqual(resp.status_code, 200)
             self.assertIn(f'{data["username"]}', html)
+
+
+    def test_signup_duplicate(self):
+        """test user signup submission with non-unique credentials"""
+
+        with self.client.session_transaction() as sess:
+            sess[CURR_USER_KEY] = self.testuser.id
+
+            data = {
+                "username":"testuser",
+                "password":"testuser",
+                "email":"test@test.com",
+                "image_url":"" 
+            }            
+
+            resp = self.client.post('/signup',
+                                    data=data, 
+                                    follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Username already taken', html)
+
+
+    def test_login(self):
+        """ test user login page"""
+
+        with self.client.session_transaction() as sess:
+            sess[CURR_USER_KEY] = self.testuser.id
+
+        # Test User Login Page
+            resp = self.client.get('/login')
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('User Login Page', html)
+
+
+    def test_login_submit(self):
+        """test user login submission with valid credentials"""
+
+        with self.client.session_transaction() as sess:
+            sess[CURR_USER_KEY] = self.testuser.id
+
+            data = {
+                "username":"testuser",
+                "password":"testuser",
+            }            
+
+            resp = self.client.post('/login',
+                                    data=data, 
+                                    follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('testuser', html)
+
+
+    def test_login_submit_invalid(self):
+        """test user login submission with invalid credentials"""
+
+        with self.client.session_transaction() as sess:
+            sess[CURR_USER_KEY] = self.testuser.id
+
+            data = {
+                "username":"testuser",
+                "password":"testuser_wrong",
+            }            
+
+            resp = self.client.post('/login',
+                                    data=data, 
+                                    follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Invalid credentials', html)
+
+
+    def test_logout(self):
+        """test user logout page"""
+
+        with self.client.session_transaction() as sess:
+            sess[CURR_USER_KEY] = self.testuser.id
+
+        # Test User Logout Page
+            resp = self.client.get('/logout', follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('You have been logged out', html)
+
+
+    def test_users(self):
+        """test users page"""
+
+        with self.client.session_transaction() as sess:
+            sess[CURR_USER_KEY] = self.testuser.id
+
+        # Test Users Page
+            resp = self.client.get('/users', follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('User Cards', html)
+
+
+    def test_user_detail(self):
+        """test user detail page"""
+
+        with self.client.session_transaction() as sess:
+            sess[CURR_USER_KEY] = self.testuser.id
+
+            testuser = User.query.get(sess[CURR_USER_KEY])
+
+        # Test User Detail Page
+            resp = self.client.get(f'/users/{testuser.id}')
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(f'{testuser.username}', html)
