@@ -12,6 +12,7 @@ from flask_bcrypt import Bcrypt
 from models import db, User, Message, Follows
 from psycopg2.errors import UniqueViolation
 from sqlalchemy import exc
+import pdb
 
 bcrypt = Bcrypt()
 
@@ -43,7 +44,8 @@ U1 = {
 U2 = { 
     "email" : "test2@test.com",
     "username" : "testuser2",
-    "password" : "HASHED_PASSWORD"
+    "password" : "HASHED_PASSWORD",
+    "image_url": ""
 }
 
 class UserModelTestCase(TestCase):
@@ -58,8 +60,8 @@ class UserModelTestCase(TestCase):
 
         self.client = app.test_client()
 
-        u1 = User(**U1)
-        u2 = User(**U2)
+        u1 = User.signup(**U1)
+        u2 = User.signup(**U2)
 
         db.session.add_all([u1, u2])
         db.session.commit()
@@ -157,8 +159,6 @@ class UserModelTestCase(TestCase):
 
     def test_user_signup(self):
         """Make sure User.signup succesfully creates a new user given valid credentials"""
-
-        hashed_pwd = bcrypt.generate_password_hash("HASHED_PASSWORD").decode('UTF-8')
     
         u3_data = {
          "email" : "test3@test.com",
@@ -171,11 +171,9 @@ class UserModelTestCase(TestCase):
 
         self.assertEqual(user.email, u3_data['email'])
         self.assertEqual(user.username, u3_data['username'])
-        # self.assertEqual(user.password, hashed_pwd) 
-        # Q: how can we test password? We tried to replicate here...
         self.assertEqual(user.image_url, u3_data['image_url'])
 
-        # Q: Do we test by pulling from db?  
+        # probably easier to just test that we have 3 users now
         
 
     def test_user_signup_nonunique(self):
@@ -184,9 +182,39 @@ class UserModelTestCase(TestCase):
         with self.assertRaises(exc.IntegrityError):
             u3 = User.signup(**U1)  
             db.session.commit()
-          
 
-        #Q How do we commit and assert this? 
 
+    def test_user_signup_nonnullable(self):
+        """Make sure User.signup fails to create a new user if non-nullable field is left blank"""
+
+        u3_data = {
+         "username" : "testuser3",
+         "password" : "HASHED_PASSWORD",
+         "image_url": ""
+        }
+
+        with self.assertRaises(TypeError):
+            u3 = User.signup(**u3_data)
+            db.session.commit()
+
+
+    def test_authenticate(self):
+        """Make sure User.authenticate successfully returns a user when given a valid username and password"""
+        u1 = User.query.get(self.u1_id)
+
+        result1 = User.authenticate('testuser1', 'HASHED_PASSWORD')
+
+        self.assertEqual(result1, u1)
+
+        """Make sure User.authenticate fails to return a user when given an invalid username"""
+
+        result2 = User.authenticate('testuser4', 'HASHED_PASSWORD')
+
+        self.assertFalse(result2)
+
+        """Make sure User.authenticate fails to return a user when given an invalid password """
     
+        result3 = User.authenticate('testuser1', 'WRONG_PASSWORD')
+
+        self.assertFalse(result3)
 
