@@ -40,18 +40,43 @@ class UserModelTestCase(TestCase):
 
         self.client = app.test_client()
 
-    def test_user_model(self):
-        """Does basic model work?"""
-
-        u = User(
-            email="test@test.com",
-            username="testuser",
+        u1 = User(
+            email="test1@test.com",
+            username="testuser1",
             password="HASHED_PASSWORD"
         )
-
-        db.session.add(u)
+        
+        u2 = User(
+            email="test2@test.com",
+            username="testuser2",
+            password="HASHED_PASSWORD"
+        )
+        self.u1_id = u1.id
+        self.u2_id = u2.id
+        print(self.u1_id, 'Printing user id')
+        print(u1, 'Printing user')
+        db.session.add_all([u1,u2])
         db.session.commit()
 
+    def test_user_model(self):
+        """Does basic model work?"""
+        u1 = User.query.get(self.u1_id)
         # User should have no messages & no followers
-        self.assertEqual(len(u.messages), 0)
-        self.assertEqual(len(u.followers), 0)
+        self.assertEqual(len(u1.messages), 0)
+        self.assertEqual(len(u1.followers), 0)
+
+    def test_user_repr(self):
+        """Test user repr"""
+
+        u1 = User.query.get(self.u1_id)
+        
+
+        # User should see the repr
+
+        self.assertEqual( f"<User #{u1.id}: {u1.username}, {u1.email}>",
+                          u1.__repr__() )
+      
+
+        
+
+    

@@ -180,6 +180,10 @@ class Message(db.Model):
     user = db.relationship('User')
     like = db.relationship('Like', backref='messages')
 
+    def __repr__(self):
+        return f"<Message #{self.id}: {self.text}, {self.timestamp}, {self.user_id}>"
+
+
 
 # ================================================================= Likes
 class Like(db.Model):
