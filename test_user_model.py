@@ -69,8 +69,6 @@ class UserModelTestCase(TestCase):
         self.u1_id = u1.id
         self.u2_id = u2.id
 
-        # self.u1 = u1
-        # self.u2 = u2
 
 
     def tearDown(self):
@@ -158,7 +156,8 @@ class UserModelTestCase(TestCase):
         self.assertFalse(result)
 
     def test_user_signup(self):
-        """Make sure User.signup succesfully creates a new user given valid credentials"""
+        """Make sure User.signup succesfully creates a new user given valid
+           credentials"""
     
         u3_data = {
          "email" : "test3@test.com",
@@ -177,7 +176,8 @@ class UserModelTestCase(TestCase):
         
 
     def test_user_signup_nonunique(self):
-        """Make sure User.signup fails to create a new user if credentials are not unique"""
+        """Make sure User.signup fails to create a new user if credentials are
+           not unique"""
                     
         with self.assertRaises(exc.IntegrityError):
             u3 = User.signup(**U1)  
@@ -185,7 +185,8 @@ class UserModelTestCase(TestCase):
 
 
     def test_user_signup_nonnullable(self):
-        """Make sure User.signup fails to create a new user if non-nullable field is left blank"""
+        """Make sure User.signup fails to create a new user if non-nullable
+           field is left blank"""
 
         u3_data = {
          "username" : "testuser3",
@@ -199,20 +200,23 @@ class UserModelTestCase(TestCase):
 
 
     def test_authenticate(self):
-        """Make sure User.authenticate successfully returns a user when given a valid username and password"""
+        """Make sure User.authenticate successfully returns a user when given 
+           a valid username and password"""
         u1 = User.query.get(self.u1_id)
 
         result1 = User.authenticate('testuser1', 'HASHED_PASSWORD')
 
         self.assertEqual(result1, u1)
 
-        """Make sure User.authenticate fails to return a user when given an invalid username"""
+        """Make sure User.authenticate fails to return a user when given an 
+        invalid username"""
 
         result2 = User.authenticate('testuser4', 'HASHED_PASSWORD')
-
+    
         self.assertFalse(result2)
 
-        """Make sure User.authenticate fails to return a user when given an invalid password """
+        """Make sure User.authenticate fails to return a user when given an 
+           invalid password """
     
         result3 = User.authenticate('testuser1', 'WRONG_PASSWORD')
 

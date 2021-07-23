@@ -178,7 +178,7 @@ class MessageViewTestCase(TestCase):
         with self.client.session_transaction() as sess:
             sess[CURR_USER_KEY] = self.testuser.id
 
-        # Test User Logout Page
+            # Test User Logout Page
             resp = self.client.get('/logout', follow_redirects=True)
             html = resp.get_data(as_text=True)
 
@@ -192,7 +192,7 @@ class MessageViewTestCase(TestCase):
         with self.client.session_transaction() as sess:
             sess[CURR_USER_KEY] = self.testuser.id
 
-        # Test Users Page
+            # Test Users Page
             resp = self.client.get('/users', follow_redirects=True)
             html = resp.get_data(as_text=True)
 
@@ -214,3 +214,5 @@ class MessageViewTestCase(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn(f'{testuser.username}', html)
+  
+  
