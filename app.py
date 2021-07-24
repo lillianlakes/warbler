@@ -8,7 +8,6 @@ from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
-breakpoint()
 database_url = os.environ.get('DATABASE_URL', 'postgresql:///warbler')
 database_url = database_url.replace('postgres://', 'postgresql://')
 
