@@ -29,6 +29,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 
 connect_db(app)
 
+print('database url is ', database_url)
+
+
 ##############################################################################
 # User signup/login/logout
 
