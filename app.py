@@ -141,6 +141,43 @@ def _build_thread_summary(message, replies, quote_posts):
     }
 
 
+def _build_text_summary(text):
+    cleaned = " ".join((text or "").split())
+    keywords = _top_keywords(cleaned, limit=5)
+    sentences = [chunk.strip() for chunk in re.split(r"[.!?]", cleaned) if chunk.strip()]
+
+    if not cleaned:
+        return {
+            "title": "Thread summary",
+            "stats": {
+                "reply_count": 0,
+                "quote_count": 0,
+                "like_count": 0,
+                "keyword_count": 0,
+            },
+            "main_points": ["No text was provided to summarize."],
+            "reply_snippets": [],
+            "hashtags": [],
+        }
+
+    return {
+        "title": "Thread summary",
+        "stats": {
+            "reply_count": 0,
+            "quote_count": 0,
+            "like_count": 0,
+            "keyword_count": len(keywords),
+        },
+        "main_points": [
+            f"Summary of the text: {sentences[0] if sentences else cleaned}",
+            f"Main keywords: {', '.join(keywords[:5]) if keywords else 'none detected'}.",
+            f"Length: {len(cleaned.split())} words.",
+        ],
+        "reply_snippets": [],
+        "hashtags": _format_tags(keywords),
+    }
+
+
 def _build_reply_drafts(message, replies):
     keywords = _top_keywords(message.text, *[reply.text for reply in replies], limit=3)
     topic = keywords[0] if keywords else "that point"
@@ -223,6 +260,9 @@ def _build_assistant_payload(task, input_text, tone, message=None, replies=None,
 
     if task == "summary" and message:
         return _build_thread_summary(message, replies, quote_posts)
+
+    if task == "summary":
+        return _build_text_summary(input_text)
 
     if task == "rewrite":
         return _build_tone_rewrite(input_text, tone, message=message)
