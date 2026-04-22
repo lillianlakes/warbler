@@ -1,5 +1,6 @@
 import os
 import pdb
+import mimetypes
 
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
@@ -8,6 +9,12 @@ from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
+
+##############################################################################
+# Static MIME type hardening for deployment environments
+
+mimetypes.add_type('text/css', '.css')
+mimetypes.add_type('application/javascript', '.js')
 
 app = Flask(__name__)
 
