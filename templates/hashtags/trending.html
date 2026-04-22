@@ -7,7 +7,9 @@
       {% for hashtag, usage_count in trending %}
         <li class="list-group-item d-flex justify-content-between">
           <a href="/hashtags/{{ hashtag.name }}">#{{ hashtag.name }}</a>
-          <span class="text-muted">{{ usage_count }} posts</span>
+          <span class="text-muted">
+            {{ usage_count }} post{% if usage_count != 1 %}s{% endif %}
+          </span>
         </li>
       {% else %}
         <li class="list-group-item text-muted">No hashtags yet.</li>
