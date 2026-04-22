@@ -103,7 +103,7 @@
                   <a href="/messages/{{ msg.id }}/quote" class="btn btn-link p-0 mr-3">
                     <i class="fas fa-quote-right"></i> Quote
                   </a>
-                  <a href="/ai/assistant?prefill={{ msg.text|urlencode }}" class="btn btn-link p-0">
+                  <a href="/ai/assistant?message_id={{ msg.id }}&task=summary" class="btn btn-link p-0">
                     <i class="fas fa-robot"></i> Summarize
                   </a>
                 </form>

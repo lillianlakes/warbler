@@ -1,6 +1,7 @@
 import mimetypes
 import os
 import re
+from collections import Counter
 
 from flask import Flask, flash, g, redirect, render_template, request, session
 from sqlalchemy import desc, func
@@ -31,6 +32,15 @@ from models import (
 
 CURR_USER_KEY = "curr_user"
 
+STOPWORDS = {
+    "about", "after", "again", "also", "been", "could", "from", "have",
+    "into", "just", "more", "most", "need", "that", "this", "with",
+    "your", "were", "what", "when", "where", "which", "will", "would",
+    "there", "their", "them", "they", "than", "then", "some", "over",
+    "very", "have", "having", "make", "made", "like", "want", "good",
+    "great", "nice", "today", "tomorrow", "yesterday", "thread", "post",
+}
+
 mimetypes.add_type("text/css", ".css")
 mimetypes.add_type("application/javascript", ".js")
 
@@ -56,6 +66,168 @@ print("database url is ", database_url)
 
 def _extract_hashtag_names(text):
     return {tag.lower() for tag in re.findall(r"#([A-Za-z0-9_]+)", text or "")}
+
+
+def _tokenize_keywords(*texts):
+    words = []
+
+    for text in texts:
+        if not text:
+            continue
+
+        words.extend(
+            word.lower()
+            for word in re.findall(r"\b[\w']+\b", text)
+            if len(word) > 3 and word.lower() not in STOPWORDS
+        )
+
+    return words
+
+
+def _top_keywords(*texts, limit=5):
+    counts = Counter(_tokenize_keywords(*texts))
+    return [word for word, _ in counts.most_common(limit)]
+
+
+def _format_tags(words):
+    return [f"#{word}" for word in words[:4]]
+
+
+def _load_message_thread(message):
+    replies = (
+        Message.query.join(Reply, Reply.child_message_id == Message.id)
+        .filter(Reply.parent_message_id == message.id)
+        .order_by(Message.timestamp.asc())
+        .all()
+    )
+    quote_posts = (
+        QuotePost.query.filter_by(message_id=message.id)
+        .order_by(desc(QuotePost.timestamp))
+        .all()
+    )
+    return replies, quote_posts
+
+
+def _build_thread_summary(message, replies, quote_posts):
+    keywords = _top_keywords(
+        message.text,
+        *[reply.text for reply in replies],
+        *[quote.text for quote in quote_posts],
+    )
+    hashtags = sorted(
+        {hashtag.name for hashtag in message.hashtags}
+        | set(_format_tags(keywords))
+    )
+    reply_snippets = [
+        f"@{reply.user.username}: {reply.text[:90]}"
+        for reply in replies[:3]
+    ]
+
+    return {
+        "title": "Thread summary",
+        "stats": {
+            "reply_count": len(replies),
+            "quote_count": len(quote_posts),
+            "like_count": len(message.users_who_like),
+            "keyword_count": len(keywords),
+        },
+        "main_points": [
+            f"Original post from @{message.user.username}: {message.text}",
+            f"The thread has {len(replies)} replies and {len(quote_posts)} quote posts.",
+            f"Main keywords: {', '.join(keywords[:5]) if keywords else 'none detected'}.",
+        ],
+        "reply_snippets": reply_snippets,
+        "hashtags": hashtags,
+    }
+
+
+def _build_reply_drafts(message, replies):
+    keywords = _top_keywords(message.text, *[reply.text for reply in replies], limit=3)
+    topic = keywords[0] if keywords else "that point"
+
+    return [
+        f"Thanks for sharing — {topic} is a useful reminder.",
+        f"Great thread. I’d add that {topic} often pairs well with consistency.",
+        f"Curious what you think the next step is for {topic}?",
+    ]
+
+
+def _build_compose_help(text, message=None, replies=None):
+    replies = replies or []
+    keywords = _top_keywords(text, *(reply.text for reply in replies), limit=4)
+    hashtags = _format_tags(keywords)
+    lead = text.strip() or (message.text if message else "")
+    shortened = lead[:140].strip()
+
+    if message:
+        context = f"Replying to @{message.user.username}: {message.text}"
+    else:
+        context = "General draft mode."
+
+    return {
+        "title": "Compose help",
+        "context": context,
+        "draft": shortened,
+        "reply_drafts": _build_reply_drafts(message, replies) if message else [
+            f"{shortened} — thoughts?",
+            f"{shortened} #warbler",
+            f"Quick take: {shortened}",
+        ],
+        "hashtags": hashtags,
+        "notes": [
+            "Keep it under 140 characters.",
+            "Lead with the key point.",
+            "Use one or two hashtags max.",
+        ],
+    }
+
+
+def _build_tone_rewrite(text, tone, message=None):
+    source = text.strip() or (message.text if message else "")
+    tone = (tone or "friendly").strip().lower()
+    theme = source[:140]
+
+    presets = {
+        "professional": [
+            f"Thanks for the update. {theme}",
+            f"Appreciate the insight — {theme}",
+        ],
+        "witty": [
+            f"Plot twist: {theme}",
+            f"Tiny bug, big lesson: {theme}",
+        ],
+        "concise": [
+            f"TL;DR: {theme}",
+            f"Quick take: {theme}",
+        ],
+        "friendly": [
+            f"Nice one — {theme}",
+            f"Love this: {theme}",
+        ],
+    }
+
+    return {
+        "title": f"Tone rewrite ({tone})",
+        "original": source,
+        "options": presets.get(tone, [
+            f"{theme}",
+            f"{theme} #warbler",
+        ]),
+        "hashtags": _format_tags(_top_keywords(source, limit=3)),
+    }
+
+
+def _build_assistant_payload(task, input_text, tone, message=None, replies=None, quote_posts=None):
+    replies = replies or []
+    quote_posts = quote_posts or []
+
+    if task == "summary" and message:
+        return _build_thread_summary(message, replies, quote_posts)
+
+    if task == "rewrite":
+        return _build_tone_rewrite(input_text, tone, message=message)
+
+    return _build_compose_help(input_text, message=message, replies=replies)
 
 
 def _attach_hashtags_to_message(message):
@@ -566,15 +738,61 @@ def ai_assistant():
 
     form = AIAssistantForm()
     result = None
+    assistant_message = None
+    thread_replies = []
+    thread_quote_posts = []
+
+    source_message_id = request.args.get("message_id") or form.source_message_id.data
+    if source_message_id:
+        assistant_message = Message.query.get(source_message_id)
+        if assistant_message:
+            thread_replies, thread_quote_posts = _load_message_thread(assistant_message)
+            if request.method == "GET" and not form.input_text.data:
+                form.input_text.data = assistant_message.text
+            form.source_message_id.data = str(assistant_message.id)
 
     if form.validate_on_submit():
-        result = _run_ai_assistant(form.task.data, form.input_text.data, form.tone.data)
+        assistant_message = None
+        if form.source_message_id.data:
+            assistant_message = Message.query.get(form.source_message_id.data)
+            if assistant_message:
+                thread_replies, thread_quote_posts = _load_message_thread(assistant_message)
+
+        result = _build_assistant_payload(
+            form.task.data,
+            form.input_text.data,
+            form.tone.data,
+            message=assistant_message,
+            replies=thread_replies,
+            quote_posts=thread_quote_posts,
+        )
 
     prefill = request.args.get("prefill")
-    if prefill and request.method == "GET":
+    if prefill and request.method == "GET" and not form.input_text.data:
         form.input_text.data = prefill
 
-    return render_template("ai/assistant.html", form=form, result=result)
+    task = request.args.get("task")
+    if task in {"compose", "summary", "rewrite"} and request.method == "GET":
+        form.task.data = task
+
+    if assistant_message and request.method == "GET" and form.task.data == "compose":
+        result = _build_assistant_payload(
+            "compose",
+            form.input_text.data,
+            form.tone.data,
+            message=assistant_message,
+            replies=thread_replies,
+            quote_posts=thread_quote_posts,
+        )
+
+    return render_template(
+        "ai/assistant.html",
+        form=form,
+        result=result,
+        assistant_message=assistant_message,
+        thread_replies=thread_replies,
+        thread_quote_posts=thread_quote_posts,
+    )
 
 
 @app.route("/", methods=["GET", "POST"])

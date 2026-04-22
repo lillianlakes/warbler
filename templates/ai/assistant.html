@@ -1,32 +1,151 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-8">
-    <h4>Warbler AI Assistant</h4>
-    <p class="text-muted">Use compose help, thread summary, or tone rewrite.</p>
+  <div class="col-md-9 col-lg-8">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h4 class="mb-2">Warbler AI Assistant</h4>
+        <p class="text-muted mb-3">Free built-in assistant for replies, summaries, and tone rewrites.</p>
 
-    <form method="POST">
-      {{ form.csrf_token }}
-      <div class="form-group">
-        {{ form.task.label }}
-        <div>{{ form.task(class='form-control') }}</div>
-      </div>
-      <div class="form-group">
-        {{ form.input_text.label }}
-        {{ form.input_text(class='form-control', rows='6', placeholder='Paste a draft or thread text...') }}
-      </div>
-      <div class="form-group">
-        {{ form.tone.label }}
-        {{ form.tone(class='form-control', placeholder='professional, witty, concise...') }}
-      </div>
-      <button class="btn btn-primary">Run Assistant</button>
-    </form>
+        {% if assistant_message %}
+          <div class="alert alert-light border">
+            <strong>Context:</strong> @{{ assistant_message.user.username }}
+            <span class="text-muted">· {{ assistant_message.timestamp.strftime('%d %B %Y') }}</span>
+            <div class="mt-2">{{ assistant_message.text }}</div>
+            <div class="text-muted small mt-2">
+              {{ thread_replies|length }} replies · {{ thread_quote_posts|length }} quote posts
+            </div>
+          </div>
+        {% endif %}
 
-    {% if result %}
-      <hr>
-      <h5>Result</h5>
-      <pre style="white-space: pre-wrap;">{{ result }}</pre>
-    {% endif %}
+        <form method="POST">
+          {{ form.csrf_token }}
+          {{ form.source_message_id }}
+
+          <div class="form-group">
+            <label class="d-block">What do you want help with?</label>
+            <div class="d-flex flex-wrap">
+              {% for choice in form.task %}
+                <label class="mr-3 mb-2">
+                  {{ choice }} {{ choice.label.text }}
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="form-group">
+            {{ form.input_text.label }}
+            {{ form.input_text(class='form-control', rows='6', placeholder='Paste a draft, message, or thread text...') }}
+            <small class="text-muted">You can also start from a message and let the assistant use thread context.</small>
+          </div>
+
+          <div class="form-group">
+            {{ form.tone.label }}
+            {{ form.tone(class='form-control', placeholder='professional, witty, concise, friendly...') }}
+          </div>
+
+          <button class="btn btn-primary">Run Assistant</button>
+        </form>
+
+        {% if assistant_message %}
+          <div class="mt-4">
+            <a href="/ai/assistant?message_id={{ assistant_message.id }}&task=summary" class="btn btn-outline-secondary btn-sm mr-2">Summarize thread</a>
+            <a href="/ai/assistant?message_id={{ assistant_message.id }}&task=compose" class="btn btn-outline-secondary btn-sm mr-2">Draft reply</a>
+            <a href="/ai/assistant?message_id={{ assistant_message.id }}&task=rewrite" class="btn btn-outline-secondary btn-sm">Rewrite tone</a>
+          </div>
+        {% endif %}
+
+        {% if result %}
+          <hr>
+          <h5>{{ result.title }}</h5>
+
+          {% if result.context %}
+            <p class="text-muted">{{ result.context }}</p>
+          {% endif %}
+
+          {% if result.stats %}
+            <div class="row text-center mb-3">
+              <div class="col-6 col-md-3 mb-2"><strong>{{ result.stats.reply_count }}</strong><br><span class="text-muted small">Replies</span></div>
+              <div class="col-6 col-md-3 mb-2"><strong>{{ result.stats.quote_count }}</strong><br><span class="text-muted small">Quote posts</span></div>
+              <div class="col-6 col-md-3 mb-2"><strong>{{ result.stats.like_count }}</strong><br><span class="text-muted small">Likes</span></div>
+              <div class="col-6 col-md-3 mb-2"><strong>{{ result.stats.keyword_count }}</strong><br><span class="text-muted small">Keywords</span></div>
+            </div>
+          {% endif %}
+
+          {% if result.main_points %}
+            <ul class="list-group mb-3">
+              {% for point in result.main_points %}
+                <li class="list-group-item">{{ point }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          {% if result.draft %}
+            <div class="mb-3">
+              <h6>Suggested draft</h6>
+              <div class="p-3 bg-light border rounded">{{ result.draft }}</div>
+            </div>
+          {% endif %}
+
+          {% if result.reply_drafts %}
+            <div class="mb-3">
+              <h6>Reply ideas</h6>
+              <ul class="list-group">
+                {% for reply in result.reply_drafts %}
+                  <li class="list-group-item">{{ reply }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {% if result.options %}
+            <div class="mb-3">
+              <h6>Rewrite options</h6>
+              <ul class="list-group">
+                {% for option in result.options %}
+                  <li class="list-group-item">{{ option }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {% if result.reply_snippets %}
+            <div class="mb-3">
+              <h6>Thread signals</h6>
+              <ul class="list-group">
+                {% for snippet in result.reply_snippets %}
+                  <li class="list-group-item">{{ snippet }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {% if result.hashtags %}
+            <p class="mb-0">
+              <strong>Suggested hashtags:</strong>
+              {% for hashtag in result.hashtags %}
+                <span class="badge badge-pill badge-light border">{{ hashtag }}</span>
+              {% endfor %}
+            </p>
+          {% endif %}
+
+          {% if result.notes %}
+            <p class="text-muted mt-3 mb-0">
+              {% for note in result.notes %}
+                {{ note }}{% if not loop.last %} · {% endif %}
+              {% endfor %}
+            </p>
+          {% endif %}
+
+          {% if result.original %}
+            <div class="mt-3">
+              <h6>Original text</h6>
+              <div class="p-3 bg-light border rounded">{{ result.original }}</div>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -36,6 +36,7 @@ class AIAssistantForm(FlaskForm):
         ],
         default='compose',
     )
+    source_message_id = HiddenField()
     input_text = TextAreaField('Input text', validators=[DataRequired(), Length(max=2000)])
     tone = StringField('(Optional) Rewrite tone (e.g. professional, witty, friendly)')
 
