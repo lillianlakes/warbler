@@ -19,6 +19,24 @@
               {{ message.timestamp.strftime('%d %B %Y') }}
             </span>
             <p>{{ message.text }}</p>
+
+            {% if g.user and g.user.id != message.user.id %}
+              <form method="POST">
+                {% if message in g.user.liked_messages %}
+                  <button type="submit"
+                          formaction="/messages/{{ message.id }}/unlike"
+                          class="btn btn-link text-danger p-0">
+                    <i class="fas fa-heart"></i> Unlike
+                  </button>
+                {% else %}
+                  <button type="submit"
+                          formaction="/messages/{{ message.id }}/like"
+                          class="btn btn-link p-0">
+                    <i class="far fa-heart"></i> Like
+                  </button>
+                {% endif %}
+              </form>
+            {% endif %}
           </div>
         </li>
 

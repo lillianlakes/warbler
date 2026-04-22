@@ -59,18 +59,23 @@
               <p>{{ msg.text }}</p>
                 
 
-              <!-- TODO: Tim suggested making classes for the styling -->
-          <form method="POST" style="position:relative;">
-              <!-- Unlike liked messages -->
-          {% if msg in g.user.liked_messages %} 
-            <button type="submit" formaction="/messages/{{ msg.id }}/unlike" class="btn fas fa-heart fa-lg" style="color:red; position: absolute; z-index: 9999;">
-            <!-- <a href="/messages/{{ msg.id }}/users_who_like" style="text-decoration: none">{{ msg.users_who_like | length }}</a> -->
-          {% elif msg.user.id != g.user.id %}
-            <!-- Like messages written by other users -->
-            <button type="submit" formaction="/messages/{{ msg.id }}/like" class="btn far fa-heart fa-lg" style="position: absolute; z-index: 9999;">
-            <!-- <a href="/messages/{{ msg.id }}/users_who_like" style="text-decoration: none">{{ msg.users_who_like | length }}</a> -->
-          {% endif %}
-          </form>  
+              {% if msg.user.id != g.user.id %}
+                <form method="POST">
+                  {% if msg in g.user.liked_messages %}
+                    <button type="submit"
+                            formaction="/messages/{{ msg.id }}/unlike"
+                            class="btn btn-link text-danger p-0">
+                      <i class="fas fa-heart"></i> Unlike
+                    </button>
+                  {% else %}
+                    <button type="submit"
+                            formaction="/messages/{{ msg.id }}/like"
+                            class="btn btn-link p-0">
+                      <i class="far fa-heart"></i> Like
+                    </button>
+                  {% endif %}
+                </form>
+              {% endif %}
             
             </div>
           </li>

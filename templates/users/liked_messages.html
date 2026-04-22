@@ -14,13 +14,13 @@
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
               <p>{{ msg.text }}</p>
                 
-
-            <!-- add class for styling -->
-          <form method="POST" style="position:relative;">
-              <!-- Unlike liked messages -->
-            <button type="submit" formaction="/messages/{{ msg.id }}/unlike" class="btn fas fa-heart fa-lg" style="color:red; position: absolute; z-index: 9999;">
-            <!-- <a href="/messages/{{ msg.id }}/users_who_like" style="text-decoration: none">{{ msg.users_who_like | length }}</a> -->
-          </form>  
+              <form method="POST">
+                <button type="submit"
+                        formaction="/messages/{{ msg.id }}/unlike"
+                        class="btn btn-link text-danger p-0">
+                  <i class="fas fa-heart"></i> Unlike
+                </button>
+              </form>
 
             </div>
           </li>
