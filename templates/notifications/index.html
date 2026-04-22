@@ -25,9 +25,7 @@
           {% else %}
             triggered a notification.
           {% endif %}
-          {% if n.message %}
-            <a href="/messages/{{ n.message.id }}" class="ml-2">View</a>
-          {% endif %}
+          <a href="/notifications/{{ n.id }}/view" class="ml-2">View</a>
           <div><small class="text-muted">{{ n.timestamp.strftime('%d %B %Y %H:%M') }}</small></div>
         </li>
       {% else %}

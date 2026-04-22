@@ -333,8 +333,13 @@ def add_user_to_g():
 
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
+        g.unread_notifications_count = Notification.query.filter_by(
+            recipient_user_id=g.user.id,
+            is_read=False,
+        ).count()
     else:
         g.user = None
+        g.unread_notifications_count = 0
 
 
 def do_login(user):
@@ -726,6 +731,30 @@ def notifications_index():
     )
 
     return render_template("notifications/index.html", notifications=notifications)
+
+
+@app.route("/notifications/<int:notification_id>/view")
+def notifications_view(notification_id):
+    if not g.user:
+        flash("You must be logged in to view notifications.", "danger")
+        return redirect("/")
+
+    notification = Notification.query.filter_by(
+        id=notification_id,
+        recipient_user_id=g.user.id,
+    ).first_or_404()
+
+    if not notification.is_read:
+        notification.is_read = True
+        db.session.commit()
+
+    if notification.message_id:
+        return redirect(f"/messages/{notification.message_id}")
+
+    if notification.actor_user_id:
+        return redirect(f"/users/{notification.actor_user_id}")
+
+    return redirect("/notifications")
 
 
 @app.route("/notifications/read-all", methods=["POST"])

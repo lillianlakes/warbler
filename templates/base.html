@@ -62,7 +62,19 @@
         <li><a href="/login">Log in</a></li>
       {% else %}
         <li><a href="/hashtags/trending">Trending</a></li>
-        <li><a href="/notifications">Notifications</a></li>
+        <li>
+          <a href="/notifications" class="position-relative pr-3">
+            Notifications
+            {% if g.unread_notifications_count > 0 %}
+              <span
+                class="badge badge-pill badge-danger position-absolute"
+                style="top: -8px; right: -14px; min-width: 22px;"
+              >
+                {{ g.unread_notifications_count if g.unread_notifications_count < 100 else '99+' }}
+              </span>
+            {% endif %}
+          </a>
+        </li>
         <li><a href="/users/{{ g.user.id }}/bookmarks">Bookmarks</a></li>
         <li><a href="/ai/assistant">AI</a></li>
         <li>
