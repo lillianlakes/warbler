@@ -1,0 +1,26 @@
+{% extends 'users/detail.html' %}
+{% block user_details %}
+<div class="col-sm-6">
+  <h4>Bookmarks</h4>
+  <ul class="list-group" id="messages">
+    {% for msg in user.bookmarked_messages %}
+      <li class="list-group-item">
+        <a href="/messages/{{ msg.id }}" class="message-link"></a>
+        <a href="/users/{{ msg.user.id }}">
+          <img src="{{ msg.user.image_url }}" alt="" class="timeline-image">
+        </a>
+        <div class="message-area">
+          <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
+          <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
+          <p>{{ msg.text }}</p>
+          <form method="POST" action="/messages/{{ msg.id }}/bookmark">
+            <button class="btn btn-link p-0 text-danger"><i class="fas fa-bookmark"></i> Remove</button>
+          </form>
+        </div>
+      </li>
+    {% else %}
+      <li class="list-group-item text-muted">No bookmarks yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

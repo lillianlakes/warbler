@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h4>Warbler AI Assistant</h4>
+    <p class="text-muted">Use compose help, thread summary, or tone rewrite.</p>
+
+    <form method="POST">
+      {{ form.csrf_token }}
+      <div class="form-group">
+        {{ form.task.label }}
+        <div>{{ form.task(class='form-control') }}</div>
+      </div>
+      <div class="form-group">
+        {{ form.input_text.label }}
+        {{ form.input_text(class='form-control', rows='6', placeholder='Paste a draft or thread text...') }}
+      </div>
+      <div class="form-group">
+        {{ form.tone.label }}
+        {{ form.tone(class='form-control', placeholder='professional, witty, concise...') }}
+      </div>
+      <button class="btn btn-primary">Run Assistant</button>
+    </form>
+
+    {% if result %}
+      <hr>
+      <h5>Result</h5>
+      <pre style="white-space: pre-wrap;">{{ result }}</pre>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

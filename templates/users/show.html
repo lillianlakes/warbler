@@ -19,22 +19,43 @@
               {{ message.timestamp.strftime('%d %B %Y') }}
             </span>
             <p>{{ message.text }}</p>
+            {% if message.hashtags %}
+              <p>
+                {% for hashtag in message.hashtags %}
+                  <a href="/hashtags/{{ hashtag.name }}">#{{ hashtag.name }}</a>
+                {% endfor %}
+              </p>
+            {% endif %}
 
-            {% if g.user and g.user.id != message.user.id %}
+            {% if g.user %}
               <form method="POST">
-                {% if message in g.user.liked_messages %}
-                  <button type="submit"
-                          formaction="/messages/{{ message.id }}/unlike"
-                          class="btn btn-link text-danger p-0">
-                    <i class="fas fa-heart"></i> Unlike
-                  </button>
-                {% else %}
-                  <button type="submit"
-                          formaction="/messages/{{ message.id }}/like"
-                          class="btn btn-link p-0">
-                    <i class="far fa-heart"></i> Like
-                  </button>
+                {% if g.user.id != message.user.id %}
+                  {% if message in g.user.liked_messages %}
+                    <button type="submit"
+                            formaction="/messages/{{ message.id }}/unlike"
+                            class="btn btn-link text-danger p-0 mr-2">
+                      <i class="fas fa-heart"></i> Unlike
+                    </button>
+                  {% else %}
+                    <button type="submit"
+                            formaction="/messages/{{ message.id }}/like"
+                            class="btn btn-link p-0 mr-2">
+                      <i class="far fa-heart"></i> Like
+                    </button>
+                  {% endif %}
                 {% endif %}
+                <button type="submit" formaction="/messages/{{ message.id }}/repost" class="btn btn-link p-0 mr-2">
+                  <i class="fas fa-retweet"></i> Repost
+                </button>
+                <button type="submit" formaction="/messages/{{ message.id }}/bookmark" class="btn btn-link p-0 mr-2">
+                  <i class="fas fa-bookmark"></i> Bookmark
+                </button>
+                <a href="/messages/{{ message.id }}/reply" class="btn btn-link p-0 mr-2">
+                  <i class="fas fa-reply"></i> Reply
+                </a>
+                <a href="/messages/{{ message.id }}/quote" class="btn btn-link p-0">
+                  <i class="fas fa-quote-right"></i> Quote
+                </a>
               </form>
             {% endif %}
           </div>
@@ -43,5 +64,18 @@
       {% endfor %}
 
     </ul>
+
+    {% if quote_posts %}
+      <h5 class="mt-4">Recent Quote Posts</h5>
+      <ul class="list-group" id="messages">
+        {% for quote in quote_posts %}
+          <li class="list-group-item">
+            <span class="text-muted">{{ quote.timestamp.strftime('%d %B %Y') }}</span>
+            <p>{{ quote.text }}</p>
+            <small>Quoting: <a href="/messages/{{ quote.quoted_message.id }}">{{ quote.quoted_message.text }}</a></small>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
   </div>
 {% endblock %}

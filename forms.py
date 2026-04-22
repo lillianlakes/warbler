@@ -8,7 +8,36 @@ from wtforms.validators import DataRequired, Email, Length, ValidationError, Opt
 class MessageForm(FlaskForm):
     """Form for adding/editing messages."""
 
-    text = TextAreaField('text', validators=[DataRequired()])
+    text = TextAreaField('text', validators=[DataRequired(), Length(max=140)])
+
+
+class ReplyForm(FlaskForm):
+    """Form for replying to an existing message."""
+
+    text = TextAreaField('Reply', validators=[DataRequired(), Length(max=140)])
+
+
+class QuotePostForm(FlaskForm):
+    """Form for quote-posting an existing message."""
+
+    text = TextAreaField('Quote', validators=[DataRequired(), Length(max=140)])
+
+
+class AIAssistantForm(FlaskForm):
+    """Form for local AI assistant tasks."""
+
+    task = RadioField(
+        'Task',
+        validators=[DataRequired()],
+        choices=[
+            ('compose', 'Compose help'),
+            ('summary', 'Thread summary'),
+            ('rewrite', 'Tone rewrite'),
+        ],
+        default='compose',
+    )
+    input_text = TextAreaField('Input text', validators=[DataRequired(), Length(max=2000)])
+    tone = StringField('(Optional) Rewrite tone (e.g. professional, witty, friendly)')
 
 
 class UserAddForm(FlaskForm):

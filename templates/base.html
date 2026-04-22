@@ -61,6 +61,10 @@
         <li><a href="/signup">Sign up</a></li>
         <li><a href="/login">Log in</a></li>
       {% else %}
+        <li><a href="/hashtags/trending">Trending</a></li>
+        <li><a href="/notifications">Notifications</a></li>
+        <li><a href="/users/{{ g.user.id }}/bookmarks">Bookmarks</a></li>
+        <li><a href="/ai/assistant">AI</a></li>
         <li>
           <a href="/users/{{ g.user.id }}">
             <img src="{{ g.user.image_url }}" alt="{{ g.user.username }}">

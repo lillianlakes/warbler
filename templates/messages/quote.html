@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h4>Quote post</h4>
+    <p class="text-muted">@{{ message.user.username }}: {{ message.text }}</p>
+    <form method="POST">
+      {{ form.csrf_token }}
+      {{ form.text(placeholder='Add your take...', class='form-control', rows='3') }}
+      <button class="btn btn-outline-primary btn-block mt-3">Post quote</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

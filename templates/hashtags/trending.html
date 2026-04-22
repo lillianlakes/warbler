@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h4>Trending Hashtags</h4>
+    <ul class="list-group mt-3">
+      {% for hashtag, usage_count in trending %}
+        <li class="list-group-item d-flex justify-content-between">
+          <a href="/hashtags/{{ hashtag.name }}">#{{ hashtag.name }}</a>
+          <span class="text-muted">{{ usage_count }} posts</span>
+        </li>
+      {% else %}
+        <li class="list-group-item text-muted">No hashtags yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
