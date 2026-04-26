@@ -158,7 +158,7 @@ class FeatureRoutesTestCase(TestCase):
         self.assertIn(self.source_message.text, html)
 
     def test_ai_assistant_requires_login(self):
-        resp = self.client.get("/ai/assistant", follow_redirects=False)
+        resp = self.client.get("/ai-assistant", follow_redirects=False)
 
         self.assertEqual(resp.status_code, 302)
         self.assertIn("/login", resp.headers.get("Location", ""))
@@ -167,7 +167,7 @@ class FeatureRoutesTestCase(TestCase):
         self._login_actor()
 
         resp = self.client.post(
-            "/ai/assistant",
+            "/ai-assistant",
             data={
                 "task": "compose",
                 "input_text": "I want to ship this feature this week.",
@@ -186,7 +186,7 @@ class FeatureRoutesTestCase(TestCase):
         self._login_actor()
 
         resp = self.client.post(
-            "/ai/assistant",
+            "/ai-assistant",
             data={
                 "task": "summary",
                 "input_text": "We launched a feature. Users liked it. We plan to iterate next week.",
@@ -205,7 +205,7 @@ class FeatureRoutesTestCase(TestCase):
         self._login_actor()
 
         resp = self.client.post(
-            "/ai/assistant",
+            "/ai-assistant",
             data={
                 "task": "rewrite",
                 "input_text": "this launch went great and we appreciate everyone",

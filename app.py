@@ -955,7 +955,7 @@ def hashtags_show(tag_name):
     return render_template("hashtags/show.html", hashtag=hashtag, messages=messages)
 
 
-@app.route("/ai/assistant", methods=["GET", "POST"])
+@app.route("/ai-assistant", methods=["GET", "POST"])
 def ai_assistant():
     if not g.user:
         flash("You must be logged in to use AI assistant.", "danger")
@@ -1018,6 +1018,14 @@ def ai_assistant():
         thread_replies=thread_replies,
         thread_quote_posts=thread_quote_posts,
     )
+
+
+@app.route("/ai/assistant", methods=["GET"])
+def ai_assistant_legacy_redirect():
+    target = "/ai-assistant"
+    if request.query_string:
+        target = f"{target}?{request.query_string.decode('utf-8')}"
+    return redirect(target)
 
 
 @app.route("/", methods=["GET", "POST"])

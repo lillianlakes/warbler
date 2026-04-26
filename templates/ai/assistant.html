@@ -49,9 +49,9 @@
 
         {% if assistant_message %}
           <div class="mt-4 ui-action-row">
-            <a href="/ai/assistant?message_id={{ assistant_message.id }}&task=summary" class="btn btn-outline-secondary btn-sm mr-2">Summarize thread</a>
-            <a href="/ai/assistant?message_id={{ assistant_message.id }}&task=compose" class="btn btn-outline-secondary btn-sm mr-2">Draft reply</a>
-            <a href="/ai/assistant?message_id={{ assistant_message.id }}&task=rewrite" class="btn btn-outline-secondary btn-sm">Rewrite tone</a>
+            <a href="/ai-assistant?message_id={{ assistant_message.id }}&task=summary" class="btn btn-outline-secondary btn-sm mr-2">Summarize thread</a>
+            <a href="/ai-assistant?message_id={{ assistant_message.id }}&task=compose" class="btn btn-outline-secondary btn-sm mr-2">Draft reply</a>
+            <a href="/ai-assistant?message_id={{ assistant_message.id }}&task=rewrite" class="btn btn-outline-secondary btn-sm">Rewrite tone</a>
           </div>
         {% endif %}
 
