@@ -68,6 +68,20 @@ ul.nav.navbar-nav li {
   display: flex;
 }
 
+.nav-notification-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-notification-badge {
+  top: -8px;
+  right: -14px;
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
 nav form.navbar-form {
   display: flex;
   position: relative;
@@ -150,6 +164,29 @@ nav form.navbar-form {
 
 nav + .container {
   margin-bottom: 1rem;
+}
+
+.feed-pagination {
+  min-height: 32px;
+}
+
+.ui-section-title {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ui-meta {
+  font-size: 12px;
+}
+
+.ui-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ui-action-row > * {
+  margin-bottom: 4px;
 }
 
 /* ===================== User profile */

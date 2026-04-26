@@ -1,9 +1,12 @@
 """SQLAlchemy models for Warbler."""
 
 from datetime import datetime
+import hmac
 
+import bcrypt as pybcrypt
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Index
 from sqlalchemy.schema import UniqueConstraint
 
 bcrypt = Bcrypt()
@@ -81,7 +84,8 @@ class User(db.Model):
         "User",
         secondary="follows",
         primaryjoin=(Follows.user_being_followed_id == id),
-        secondaryjoin=(Follows.user_following_id == id)
+        secondaryjoin=(Follows.user_following_id == id),
+        overlaps="following",
     )
 
     # users who this user follows  -- many to one
@@ -89,7 +93,8 @@ class User(db.Model):
         "User",
         secondary="follows",
         primaryjoin=(Follows.user_following_id == id),
-        secondaryjoin=(Follows.user_being_followed_id == id)
+        secondaryjoin=(Follows.user_being_followed_id == id),
+        overlaps="followers",
     )
     # Property that shows the messages liked by a user
     liked_messages = db.relationship('Message', secondary="likes", backref='users_who_like')
@@ -165,7 +170,9 @@ class User(db.Model):
         user = cls.query.filter_by(username=username).first()
 
         if user:
-            is_auth = bcrypt.check_password_hash(user.password, password)
+            stored_hash = user.password.encode('utf-8')
+            candidate_hash = pybcrypt.hashpw(password.encode('utf-8'), stored_hash)
+            is_auth = hmac.compare_digest(candidate_hash, stored_hash)
             if is_auth:
                 return user
 
@@ -200,8 +207,12 @@ class Message(db.Model):
         nullable=False,
     )
 
-    user = db.relationship('User')
-    like = db.relationship('Like', backref='messages')
+    user = db.relationship('User', overlaps='messages')
+    like = db.relationship(
+        'Like',
+        backref=db.backref('messages', overlaps='liked_messages,users_who_like'),
+        overlaps='liked_messages,users_who_like',
+    )
     reply_parent_links = db.relationship(
         'Reply',
         foreign_keys='Reply.parent_message_id',
@@ -279,7 +290,10 @@ class Repost(db.Model):
         nullable=False,
     )
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    __table_args__ = (UniqueConstraint('user_id', 'message_id', name='uq_repost_user_message'),)
+    __table_args__ = (
+        UniqueConstraint('user_id', 'message_id', name='uq_repost_user_message'),
+        Index('ix_reposts_message_timestamp', 'message_id', 'timestamp'),
+    )
 
 
 class QuotePost(db.Model):
@@ -299,6 +313,10 @@ class QuotePost(db.Model):
         db.Integer,
         db.ForeignKey('messages.id', ondelete='CASCADE'),
         nullable=False,
+    )
+    __table_args__ = (
+        Index('ix_quote_posts_message_timestamp', 'message_id', 'timestamp'),
+        Index('ix_quote_posts_user_timestamp', 'user_id', 'timestamp'),
     )
 
 
@@ -348,6 +366,23 @@ class Notification(db.Model):
     actor = db.relationship('User', foreign_keys=[actor_user_id])
     message = db.relationship('Message')
     quote_post = db.relationship('QuotePost')
+    __table_args__ = (
+        Index(
+            'ix_notifications_recipient_unread_timestamp',
+            'recipient_user_id',
+            'is_read',
+            'timestamp',
+        ),
+        Index(
+            'ix_notifications_event_dedupe',
+            'recipient_user_id',
+            'actor_user_id',
+            'category',
+            'message_id',
+            'quote_post_id',
+            'is_read',
+        ),
+    )
 
 
 class Hashtag(db.Model):
@@ -375,6 +410,9 @@ class MessageHashtag(db.Model):
         db.ForeignKey('hashtags.id', ondelete='CASCADE'),
         primary_key=True,
         nullable=False,
+    )
+    __table_args__ = (
+        Index('ix_message_hashtags_hashtag_message', 'hashtag_id', 'message_id'),
     )
 
 

@@ -63,13 +63,10 @@
       {% else %}
         <li><a href="/hashtags/trending">Trending</a></li>
         <li>
-          <a href="/notifications" class="position-relative pr-3">
+          <a href="/notifications" class="position-relative pr-3 nav-notification-link">
             Notifications
             {% if g.unread_notifications_count > 0 %}
-              <span
-                class="badge badge-pill badge-danger position-absolute"
-                style="top: -8px; right: -14px; min-width: 22px;"
-              >
+              <span class="badge badge-pill badge-danger position-absolute nav-notification-badge">
                 {{ g.unread_notifications_count if g.unread_notifications_count < 100 else '99+' }}
               </span>
             {% endif %}

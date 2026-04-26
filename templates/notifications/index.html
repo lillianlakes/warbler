@@ -3,14 +3,14 @@
 <div class="row justify-content-center">
   <div class="col-md-8">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="mb-0">Notifications</h4>
+      <h4 class="mb-0 ui-section-title">Notifications</h4>
       <form method="POST" action="/notifications/read-all">
         <button class="btn btn-outline-secondary btn-sm">Mark all read</button>
       </form>
     </div>
     <ul class="list-group">
       {% for n in notifications %}
-        <li class="list-group-item {% if not n.is_read %}list-group-item-light{% endif %}">
+        <li class="list-group-item py-3 {% if not n.is_read %}list-group-item-light{% endif %}">
           <strong>@{{ n.actor.username }}</strong>
           {% if n.category == 'follow' %}
             followed you.
@@ -25,8 +25,8 @@
           {% else %}
             triggered a notification.
           {% endif %}
-          <a href="/notifications/{{ n.id }}/view" class="ml-2">View</a>
-          <div><small class="text-muted">{{ n.timestamp.strftime('%d %B %Y %H:%M') }}</small></div>
+          <a href="/notifications/{{ n.id }}/view" class="btn btn-link btn-sm p-0 ml-2 align-baseline">View</a>
+          <div><small class="text-muted ui-meta">{{ n.timestamp.strftime('%d %B %Y %H:%M') }}</small></div>
         </li>
       {% else %}
         <li class="list-group-item text-muted">No notifications yet.</li>

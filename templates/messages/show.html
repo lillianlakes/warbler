@@ -17,12 +17,12 @@
                 {% if g.user.id == message.user.id %}
                   <form method="POST"
                         action="/messages/{{ message.id }}/delete">
-                    <button class="btn btn-outline-danger">Delete</button>
+                    <button class="btn btn-outline-danger btn-sm">Delete</button>
                   </form>
                 {% elif g.user.is_following(message.user) %}
                   <form method="POST"
                         action="/users/stop-following/{{ message.user.id }}">
-                    <button class="btn btn-primary">Unfollow</button>
+                    <button class="btn btn-primary btn-sm">Unfollow</button>
                   </form>
                 {% else %}
                   <form method="POST" action="/users/follow/{{ message.user.id }}">
@@ -41,18 +41,18 @@
             {% endif %}
             <span class="text-muted">{{ message.timestamp.strftime('%d %B %Y') }}</span>
             {% if g.user %}
-              <form method="POST">
+              <form method="POST" class="ui-action-row">
                 {% if g.user.id != message.user.id %}
                   {% if message in g.user.liked_messages %}
                     <button type="submit"
                             formaction="/messages/{{ message.id }}/unlike"
-                            class="btn btn-link text-danger p-0 mr-3">
+                            class="btn btn-link btn-sm text-danger p-0 mr-3 mb-1">
                       <i class="fas fa-heart"></i> Unlike
                     </button>
                   {% else %}
                     <button type="submit"
                             formaction="/messages/{{ message.id }}/like"
-                            class="btn btn-link p-0 mr-3">
+                            class="btn btn-link btn-sm p-0 mr-3 mb-1">
                       <i class="far fa-heart"></i> Like
                     </button>
                   {% endif %}
@@ -60,41 +60,41 @@
 
                 <button type="submit"
                         formaction="/messages/{{ message.id }}/repost"
-                        class="btn btn-link p-0 mr-3">
+                        class="btn btn-link btn-sm p-0 mr-3 mb-1">
                   <i class="fas fa-retweet"></i>
                   {% if g.user.has_reposted_message(message) %}Undo repost{% else %}Repost{% endif %}
                 </button>
                 <button type="submit"
                         formaction="/messages/{{ message.id }}/bookmark"
-                        class="btn btn-link p-0 mr-3">
+                        class="btn btn-link btn-sm p-0 mr-3 mb-1">
                   <i class="fas fa-bookmark"></i>
                   {% if g.user.has_bookmarked_message(message) %}Unbookmark{% else %}Bookmark{% endif %}
                 </button>
-                <a href="/messages/{{ message.id }}/reply" class="btn btn-link p-0 mr-3">
+                <a href="/messages/{{ message.id }}/reply" class="btn btn-link btn-sm p-0 mr-3 mb-1">
                   <i class="fas fa-reply"></i> Reply
                 </a>
-                <a href="/messages/{{ message.id }}/quote" class="btn btn-link p-0">
+                <a href="/messages/{{ message.id }}/quote" class="btn btn-link btn-sm p-0 mr-3 mb-1">
                   <i class="fas fa-quote-right"></i> Quote
                 </a>
-                <a href="/ai/assistant?message_id={{ message.id }}&task=summary" class="btn btn-link p-0 ml-3 mr-3">
+                <a href="/ai/assistant?message_id={{ message.id }}&task=summary" class="btn btn-link btn-sm p-0 mr-3 mb-1">
                   <i class="fas fa-robot"></i> Summarize
                 </a>
-                <a href="/ai/assistant?message_id={{ message.id }}&task=compose" class="btn btn-link p-0 mr-3">
+                <a href="/ai/assistant?message_id={{ message.id }}&task=compose" class="btn btn-link btn-sm p-0 mr-3 mb-1">
                   <i class="fas fa-pen"></i> Draft reply
                 </a>
-                <a href="/ai/assistant?message_id={{ message.id }}&task=rewrite" class="btn btn-link p-0">
+                <a href="/ai/assistant?message_id={{ message.id }}&task=rewrite" class="btn btn-link btn-sm p-0 mb-1">
                   <i class="fas fa-magic"></i> Rewrite
                 </a>
               </form>
             {% endif %}
-            <small class="text-muted">
+            <small class="text-muted ui-meta">
               {{ message.users_who_like|length }} likes · {{ message.reposts|length }} reposts · {{ replies|length }} replies
             </small>
           </div>
         </li>
       </ul>
 
-      <h5 class="mt-4">Replies</h5>
+      <h5 class="mt-4 mb-3 ui-section-title">Replies</h5>
       <ul class="list-group no-hover" id="messages">
         {% for reply in replies %}
           <li class="list-group-item py-3">
@@ -118,7 +118,7 @@
         {% endfor %}
       </ul>
 
-      <h5 class="mt-4">Quote Posts</h5>
+      <h5 class="mt-4 mb-3 ui-section-title">Quote Posts</h5>
       <ul class="list-group no-hover" id="messages">
         {% for quote in quote_posts %}
           <li class="list-group-item py-3">

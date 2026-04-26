@@ -66,18 +66,18 @@
               {% endif %}
                 
               {% if g.user %}
-                <form method="POST" class="mb-2">
+                <form method="POST" class="mb-2 ui-action-row">
                   {% if msg.user.id != g.user.id %}
                     {% if msg in g.user.liked_messages %}
                       <button type="submit"
                               formaction="/messages/{{ msg.id }}/unlike"
-                              class="btn btn-link text-danger p-0 mr-3">
+                              class="btn btn-link btn-sm text-danger p-0 mr-3 mb-1">
                         <i class="fas fa-heart"></i> Unlike
                       </button>
                     {% else %}
                       <button type="submit"
                               formaction="/messages/{{ msg.id }}/like"
-                              class="btn btn-link p-0 mr-3">
+                              class="btn btn-link btn-sm p-0 mr-3 mb-1">
                         <i class="far fa-heart"></i> Like
                       </button>
                     {% endif %}
@@ -85,31 +85,31 @@
 
                   <button type="submit"
                           formaction="/messages/{{ msg.id }}/repost"
-                          class="btn btn-link p-0 mr-3">
+                          class="btn btn-link btn-sm p-0 mr-3 mb-1">
                     <i class="fas fa-retweet"></i>
                     {% if g.user.has_reposted_message(msg) %}Undo repost{% else %}Repost{% endif %}
                   </button>
 
                   <button type="submit"
                           formaction="/messages/{{ msg.id }}/bookmark"
-                          class="btn btn-link p-0 mr-3">
+                          class="btn btn-link btn-sm p-0 mr-3 mb-1">
                     <i class="fas fa-bookmark"></i>
                     {% if g.user.has_bookmarked_message(msg) %}Unbookmark{% else %}Bookmark{% endif %}
                   </button>
 
-                  <a href="/messages/{{ msg.id }}/reply" class="btn btn-link p-0 mr-3">
+                  <a href="/messages/{{ msg.id }}/reply" class="btn btn-link btn-sm p-0 mr-3 mb-1">
                     <i class="fas fa-reply"></i> Reply
                   </a>
-                  <a href="/messages/{{ msg.id }}/quote" class="btn btn-link p-0 mr-3">
+                  <a href="/messages/{{ msg.id }}/quote" class="btn btn-link btn-sm p-0 mr-3 mb-1">
                     <i class="fas fa-quote-right"></i> Quote
                   </a>
-                  <a href="/ai/assistant?message_id={{ msg.id }}&task=summary" class="btn btn-link p-0">
+                  <a href="/ai/assistant?message_id={{ msg.id }}&task=summary" class="btn btn-link btn-sm p-0 mb-1">
                     <i class="fas fa-robot"></i> Summarize
                   </a>
                 </form>
               {% endif %}
 
-              <small class="text-muted">
+              <small class="text-muted ui-meta">
                 {{ msg.users_who_like|length }} likes · {{ msg.reposts|length }} reposts · {{ msg.reply_parent_links|length }} replies
               </small>
             
@@ -118,8 +118,20 @@
         {% endfor %}
       </ul>
 
-      <div class="mt-4">
-        <h5>Recent Quote Posts</h5>
+      <div class="d-flex justify-content-between mt-3 feed-pagination">
+        {% if page > 1 %}
+          <a class="btn btn-outline-secondary btn-sm" href="/?page={{ page - 1 }}">Newer</a>
+        {% else %}
+          <span></span>
+        {% endif %}
+
+        {% if has_next_page %}
+          <a class="btn btn-outline-secondary btn-sm" href="/?page={{ page + 1 }}">Older</a>
+        {% endif %}
+      </div>
+
+      <div class="mt-4 ui-page-section">
+        <h5 class="ui-section-title mb-3">Recent Quote Posts</h5>
         <ul class="list-group">
           {% for quote in quote_posts %}
             <li class="list-group-item">

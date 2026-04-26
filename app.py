@@ -1,11 +1,22 @@
 import mimetypes
 import os
 import re
+import secrets
+import time
+import uuid
 from collections import Counter
+from datetime import timedelta
 
 from flask import Flask, flash, g, redirect, render_template, request, session
+from flask import jsonify
 from sqlalchemy import desc, func
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
+
+try:
+    from flask_migrate import Migrate
+except ImportError:  # pragma: no cover
+    Migrate = None
 
 from forms import (
     AIAssistantForm,
@@ -19,6 +30,7 @@ from forms import (
 from models import (
     Bookmark,
     Hashtag,
+    Like,
     Message,
     MessageHashtag,
     Notification,
@@ -46,26 +58,56 @@ mimetypes.add_type("application/javascript", ".js")
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "postgresql:///warbler")
 database_url = os.environ.get("DATABASE_URL", "postgresql:///warbler")
 database_url = database_url.replace("postgres://", "postgresql://")
+
+is_production = (
+    os.environ.get("RENDER", "").lower() == "true"
+    or os.environ.get("FLASK_ENV", "").lower() == "production"
+)
+secret_key = os.environ.get("SECRET_KEY")
+
+if is_production and not secret_key:
+    raise RuntimeError("SECRET_KEY must be set in production")
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = False
 app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = False
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "it's a secret")
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SECRET_KEY"] = secret_key or secrets.token_urlsafe(32)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = is_production
+app.config["WTF_CSRF_TIME_LIMIT"] = 3600
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
+app.config["PREFERRED_URL_SCHEME"] = "https" if is_production else "http"
 
 connect_db(app)
+if Migrate:
+    migrate = Migrate(app, db, compare_type=True)
 
 with app.app_context():
     db.create_all()
 
-print("database url is ", database_url)
-
 
 def _extract_hashtag_names(text):
     return {tag.lower() for tag in re.findall(r"#([A-Za-z0-9_]+)", text or "")}
+
+
+def _normalize_text(text, max_chars=2000):
+    cleaned = " ".join((text or "").split())
+    return cleaned[:max_chars]
+
+
+def _trim_for_post(text, limit=140):
+    normalized = _normalize_text(text, max_chars=limit + 20)
+    if len(normalized) <= limit:
+        return normalized
+
+    clipped = normalized[:limit].rstrip()
+    if " " in clipped:
+        clipped = clipped.rsplit(" ", 1)[0]
+    return clipped
 
 
 def _tokenize_keywords(*texts):
@@ -96,12 +138,17 @@ def _format_tags(words):
 def _load_message_thread(message):
     replies = (
         Message.query.join(Reply, Reply.child_message_id == Message.id)
+        .options(selectinload(Message.user))
         .filter(Reply.parent_message_id == message.id)
         .order_by(Message.timestamp.asc())
         .all()
     )
     quote_posts = (
         QuotePost.query.filter_by(message_id=message.id)
+        .options(
+            selectinload(QuotePost.author),
+            selectinload(QuotePost.quoted_message),
+        )
         .order_by(desc(QuotePost.timestamp))
         .all()
     )
@@ -142,7 +189,7 @@ def _build_thread_summary(message, replies, quote_posts):
 
 
 def _build_text_summary(text):
-    cleaned = " ".join((text or "").split())
+    cleaned = _normalize_text(text)
     keywords = _top_keywords(cleaned, limit=5)
     sentences = [chunk.strip() for chunk in re.split(r"[.!?]", cleaned) if chunk.strip()]
 
@@ -193,8 +240,8 @@ def _build_compose_help(text, message=None, replies=None):
     replies = replies or []
     keywords = _top_keywords(text, *(reply.text for reply in replies), limit=4)
     hashtags = _format_tags(keywords)
-    lead = text.strip() or (message.text if message else "")
-    shortened = lead[:140].strip()
+    lead = _normalize_text(text) or (message.text if message else "")
+    shortened = _trim_for_post(lead)
 
     if message:
         context = f"Replying to @{message.user.username}: {message.text}"
@@ -220,9 +267,12 @@ def _build_compose_help(text, message=None, replies=None):
 
 
 def _build_tone_rewrite(text, tone, message=None):
-    source = text.strip() or (message.text if message else "")
+    source = _normalize_text(text) or (message.text if message else "")
     tone = (tone or "friendly").strip().lower()
-    theme = source[:140]
+    if tone not in {"professional", "witty", "concise", "friendly"}:
+        tone = "friendly"
+
+    theme = _trim_for_post(source)
 
     presets = {
         "professional": [
@@ -243,13 +293,25 @@ def _build_tone_rewrite(text, tone, message=None):
         ],
     }
 
+    options = [
+        _trim_for_post(option)
+        for option in presets.get(tone, [
+            f"{theme}",
+            f"{theme} #warbler",
+        ])
+    ]
+
+    deduped_options = []
+    seen = set()
+    for option in options:
+        if option and option not in seen:
+            deduped_options.append(option)
+            seen.add(option)
+
     return {
         "title": f"Tone rewrite ({tone})",
         "original": source,
-        "options": presets.get(tone, [
-            f"{theme}",
-            f"{theme} #warbler",
-        ]),
+        "options": deduped_options,
         "hashtags": _format_tags(_top_keywords(source, limit=3)),
     }
 
@@ -288,6 +350,19 @@ def _create_notification(recipient_user_id, category, actor_user_id, message_id=
     if recipient_user_id == actor_user_id:
         return
 
+    existing_notification = Notification.query.filter_by(
+        recipient_user_id=recipient_user_id,
+        actor_user_id=actor_user_id,
+        message_id=message_id,
+        quote_post_id=quote_post_id,
+        category=category,
+        is_read=False,
+    ).first()
+
+    if existing_notification:
+        existing_notification.timestamp = func.now()
+        return
+
     notification = Notification(
         recipient_user_id=recipient_user_id,
         actor_user_id=actor_user_id,
@@ -296,6 +371,36 @@ def _create_notification(recipient_user_id, category, actor_user_id, message_id=
         category=category,
     )
     db.session.add(notification)
+
+
+def _build_ranked_feed_query(user_ids):
+    engagement_subquery = (
+        db.session.query(
+            Message.id.label("message_id"),
+            (
+                (func.count(func.distinct(Like.users_id)) * 3)
+                + (func.count(func.distinct(Repost.id)) * 4)
+                + (func.count(func.distinct(Reply.id)) * 2)
+            ).label("engagement_score"),
+        )
+        .outerjoin(Like, Like.message_id == Message.id)
+        .outerjoin(Repost, Repost.message_id == Message.id)
+        .outerjoin(Reply, Reply.parent_message_id == Message.id)
+        .filter(Message.user_id.in_(user_ids))
+        .group_by(Message.id)
+        .subquery()
+    )
+
+    ranked_feed_query = (
+        db.session.query(Message, engagement_subquery.c.engagement_score)
+        .join(engagement_subquery, engagement_subquery.c.message_id == Message.id)
+        .filter(
+            (engagement_subquery.c.engagement_score > 0)
+            | (func.length(Message.text) >= 20)
+        )
+    )
+
+    return ranked_feed_query, engagement_subquery
 
 
 def _run_ai_assistant(task, input_text, tone):
@@ -331,12 +436,19 @@ def _run_ai_assistant(task, input_text, tone):
 def add_user_to_g():
     """If we're logged in, add curr user to Flask global."""
 
+    g.request_id = uuid.uuid4().hex[:12]
+    g.request_start = time.perf_counter()
+
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
-        g.unread_notifications_count = Notification.query.filter_by(
-            recipient_user_id=g.user.id,
-            is_read=False,
-        ).count()
+        if g.user:
+            g.unread_notifications_count = Notification.query.filter_by(
+                recipient_user_id=g.user.id,
+                is_read=False,
+            ).count()
+        else:
+            session.pop(CURR_USER_KEY, None)
+            g.unread_notifications_count = 0
     else:
         g.user = None
         g.unread_notifications_count = 0
@@ -345,14 +457,15 @@ def add_user_to_g():
 def do_login(user):
     """Log in user."""
 
+    session.clear()
+    session.permanent = True
     session[CURR_USER_KEY] = user.id
 
 
 def do_logout():
     """Logout user."""
 
-    if CURR_USER_KEY in session:
-        del session[CURR_USER_KEY]
+    session.clear()
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -426,9 +539,23 @@ def list_users():
 def users_show(user_id):
     """Show user profile."""
 
-    user = User.query.get_or_404(user_id)
+    user = User.query.options(
+        selectinload(User.messages).selectinload(Message.hashtags),
+        selectinload(User.messages).selectinload(Message.users_who_like),
+        selectinload(User.messages).selectinload(Message.reposts),
+        selectinload(User.messages).selectinload(Message.reply_parent_links),
+        selectinload(User.followers),
+        selectinload(User.following),
+    ).get_or_404(user_id)
     quote_posts = (
-        QuotePost.query.filter_by(user_id=user.id).order_by(desc(QuotePost.timestamp)).limit(20).all()
+        QuotePost.query.filter_by(user_id=user.id)
+        .options(
+            selectinload(QuotePost.author),
+            selectinload(QuotePost.quoted_message),
+        )
+        .order_by(desc(QuotePost.timestamp))
+        .limit(20)
+        .all()
     )
 
     return render_template("users/show.html", user=user, quote_posts=quote_posts)
@@ -545,15 +672,29 @@ def messages_add():
 
 @app.route("/messages/<int:message_id>", methods=["GET"])
 def messages_show(message_id):
-    msg = Message.query.get_or_404(message_id)
+    msg = Message.query.options(
+        selectinload(Message.user),
+        selectinload(Message.hashtags),
+        selectinload(Message.users_who_like),
+        selectinload(Message.reposts),
+    ).get_or_404(message_id)
 
     replies = (
         Message.query.join(Reply, Reply.child_message_id == Message.id)
+        .options(selectinload(Message.user))
         .filter(Reply.parent_message_id == msg.id)
         .order_by(Message.timestamp.asc())
         .all()
     )
-    quote_posts = QuotePost.query.filter_by(message_id=msg.id).order_by(desc(QuotePost.timestamp)).all()
+    quote_posts = (
+        QuotePost.query.filter_by(message_id=msg.id)
+        .options(
+            selectinload(QuotePost.author),
+            selectinload(QuotePost.quoted_message),
+        )
+        .order_by(desc(QuotePost.timestamp))
+        .all()
+    )
 
     return render_template("messages/show.html", message=msg, replies=replies, quote_posts=quote_posts)
 
@@ -725,6 +866,11 @@ def notifications_index():
 
     notifications = (
         Notification.query.filter_by(recipient_user_id=g.user.id)
+        .options(
+            selectinload(Notification.actor),
+            selectinload(Notification.message),
+            selectinload(Notification.quote_post),
+        )
         .order_by(desc(Notification.timestamp))
         .limit(100)
         .all()
@@ -750,6 +896,9 @@ def notifications_view(notification_id):
 
     if notification.message_id:
         return redirect(f"/messages/{notification.message_id}")
+
+    if notification.quote_post_id and notification.quote_post:
+        return redirect(f"/messages/{notification.quote_post.message_id}")
 
     if notification.actor_user_id:
         return redirect(f"/users/{notification.actor_user_id}")
@@ -792,6 +941,13 @@ def hashtags_show(tag_name):
     messages = (
         Message.query.join(MessageHashtag, MessageHashtag.message_id == Message.id)
         .filter(MessageHashtag.hashtag_id == hashtag.id)
+        .options(
+            selectinload(Message.user),
+            selectinload(Message.hashtags),
+            selectinload(Message.users_who_like),
+            selectinload(Message.reposts),
+            selectinload(Message.reply_parent_links),
+        )
         .order_by(desc(Message.timestamp))
         .all()
     )
@@ -872,21 +1028,58 @@ def homepage():
     user_and_followers_ids = [user.id for user in g.user.following]
     user_and_followers_ids.append(g.user.id)
 
-    messages = (
-        Message.query.filter(Message.user_id.in_(user_and_followers_ids))
-        .order_by(Message.timestamp.desc())
-        .limit(100)
+    page = max(request.args.get("page", 1, type=int), 1)
+    per_page = 30
+    ranked_feed_query, engagement_subquery = _build_ranked_feed_query(
+        user_and_followers_ids
+    )
+
+    total_messages = ranked_feed_query.count()
+
+    ranked_message_rows = (
+        ranked_feed_query
+        .options(
+            selectinload(Message.user),
+            selectinload(Message.hashtags),
+            selectinload(Message.users_who_like),
+            selectinload(Message.reposts),
+            selectinload(Message.reply_parent_links),
+        )
+        .order_by(
+            desc(engagement_subquery.c.engagement_score),
+            Message.timestamp.desc(),
+        )
+        .offset((page - 1) * per_page)
+        .limit(per_page)
         .all()
     )
+    messages = [message for message, _ in ranked_message_rows]
 
     quote_posts = (
         QuotePost.query.filter(QuotePost.user_id.in_(user_and_followers_ids))
+        .options(
+            selectinload(QuotePost.author),
+            selectinload(QuotePost.quoted_message),
+        )
         .order_by(desc(QuotePost.timestamp))
         .limit(25)
         .all()
     )
 
-    return render_template("home.html", messages=messages, quote_posts=quote_posts)
+    has_next_page = page * per_page < total_messages
+
+    return render_template(
+        "home.html",
+        messages=messages,
+        quote_posts=quote_posts,
+        page=page,
+        has_next_page=has_next_page,
+    )
+
+
+@app.route("/healthz")
+def healthcheck():
+    return jsonify({"status": "ok"}), 200
 
 
 @app.after_request
@@ -894,4 +1087,41 @@ def add_header(response):
     """Add non-caching headers on every request."""
 
     response.cache_control.no_store = True
+    response.headers["X-Request-ID"] = getattr(g, "request_id", "")
+
+    elapsed_ms = (time.perf_counter() - getattr(g, "request_start", time.perf_counter())) * 1000
+    user_id = getattr(getattr(g, "user", None), "id", None)
+    app.logger.info(
+        "request_id=%s method=%s path=%s status=%s user_id=%s duration_ms=%.2f",
+        getattr(g, "request_id", ""),
+        request.method,
+        request.path,
+        response.status_code,
+        user_id,
+        elapsed_ms,
+    )
+
     return response
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    app.logger.warning(
+        "request_id=%s method=%s path=%s status=404",
+        getattr(g, "request_id", ""),
+        request.method,
+        request.path,
+    )
+    return render_template("404.html"), 404
+
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    db.session.rollback()
+    app.logger.exception(
+        "request_id=%s method=%s path=%s status=500",
+        getattr(g, "request_id", ""),
+        request.method,
+        request.path,
+    )
+    return render_template("500.html"), 500
